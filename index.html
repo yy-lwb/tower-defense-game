@@ -2,27 +2,42 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>保卫萝卜 - 塔防游戏</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>保卫西瓜 - 塔防游戏</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
         body {
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            font-family: 'Microsoft YaHei', sans-serif;
+            min-height: 100dvh;
+            font-family: 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', sans-serif;
             overflow: hidden;
         }
         #gameContainer {
             position: relative;
             display: flex;
             gap: 0;
+            max-width: 100vw;
+            max-height: 100vh;
+            max-height: 100dvh;
         }
         canvas {
             border-radius: 12px;
             box-shadow: 0 0 40px rgba(255,200,100,0.3);
+            display: block;
+            touch-action: none;
         }
         #sidebar {
             width: 220px;
@@ -35,6 +50,8 @@
             gap: 10px;
             border: 2px solid rgba(255,200,100,0.2);
             border-left: none;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         .panel-title {
             font-size: 16px;
@@ -63,6 +80,7 @@
             cursor: pointer;
             transition: all 0.2s;
             background: rgba(255,255,255,0.05);
+            touch-action: manipulation;
         }
         .tower-btn:hover { border-color: #ffd700; background: rgba(255,215,0,0.1); }
         .tower-btn.selected { border-color: #ffd700; background: rgba(255,215,0,0.2); box-shadow: 0 0 10px rgba(255,215,0,0.3); }
@@ -74,6 +92,7 @@
             align-items: center;
             justify-content: center;
             font-size: 20px;
+            flex-shrink: 0;
         }
         .tower-info { flex: 1; }
         .tower-name { font-size: 13px; font-weight: bold; color: #fff; }
@@ -87,6 +106,7 @@
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s;
+            touch-action: manipulation;
         }
         .btn-start {
             background: linear-gradient(135deg, #ffd700, #ff8c00);
@@ -108,7 +128,7 @@
         #startScreen, #gameOverScreen, #winScreen {
             position: absolute;
             top: 0; left: 0;
-            width: 800px; height: 600px;
+            width: 100%; height: 100%;
             background: rgba(0,0,0,0.85);
             display: flex;
             flex-direction: column;
@@ -149,6 +169,7 @@
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s;
+            touch-action: manipulation;
         }
         .level-btn:hover { border-color: #ffd700; background: rgba(255,215,0,0.3); transform: scale(1.1); }
         .level-btn.locked { opacity: 0.3; cursor: not-allowed; }
@@ -161,6 +182,7 @@
             border-radius: 5px;
             color: #fff;
             cursor: pointer;
+            touch-action: manipulation;
         }
         .speed-btn:hover { background: rgba(255,215,0,0.2); border-color: #ffd700; }
         #towerDetail {
@@ -177,6 +199,89 @@
         }
         .detail-label { color: #aaa; }
         .detail-value { color: #fff; }
+
+        /* ===== 移动端适配 ===== */
+        @media (max-width: 1024px) {
+            body {
+                align-items: flex-start;
+                justify-content: flex-start;
+            }
+            #gameContainer {
+                flex-direction: column;
+                width: 100vw;
+                height: 100vh;
+                height: 100dvh;
+            }
+            canvas {
+                border-radius: 0;
+                flex-shrink: 0;
+            }
+            #sidebar {
+                width: 100%;
+                border-radius: 0;
+                border-left: 2px solid rgba(255,200,100,0.2);
+                border-top: none;
+                flex-direction: column;
+                padding: 8px 10px;
+                gap: 6px;
+                max-height: 45vh;
+                overflow-y: auto;
+            }
+            .panel-title { font-size: 13px; padding-bottom: 4px; }
+            .info-row { font-size: 12px; padding: 2px 0; }
+            #towerShop {
+                display: flex;
+                gap: 6px;
+                overflow-x: auto;
+                padding-bottom: 4px;
+                -webkit-overflow-scrolling: touch;
+            }
+            #towerShop::-webkit-scrollbar { display: none; }
+            .tower-btn {
+                flex-direction: column;
+                min-width: 80px;
+                gap: 4px;
+                padding: 6px;
+                flex-shrink: 0;
+            }
+            .tower-icon { width: 30px; height: 30px; font-size: 16px; }
+            .tower-desc { display: none; }
+            .tower-name { font-size: 11px; }
+            .tower-cost { font-size: 10px; }
+            #towerDetail .panel-title { font-size: 11px; }
+            .detail-row { font-size: 11px; }
+            .btn { padding: 8px; font-size: 13px; }
+            .btn-upgrade, .btn-sell { padding: 6px; font-size: 11px; }
+            .speed-btn { padding: 6px 12px; font-size: 12px; }
+
+            #startScreen, #gameOverScreen, #winScreen {
+                width: 100%;
+                height: 100%;
+                border-radius: 0;
+                padding: 20px;
+            }
+            #startScreen h1, #winScreen h1 {
+                font-size: 32px;
+            }
+            #gameOverScreen h1 {
+                font-size: 32px;
+            }
+            .subtitle { font-size: 14px; margin-bottom: 20px; }
+            .level-btn {
+                width: 50px; height: 50px;
+                font-size: 18px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .info-row { font-size: 11px; }
+            .tower-btn { min-width: 70px; padding: 5px; }
+            .tower-icon { width: 26px; height: 26px; font-size: 14px; }
+            .tower-name { font-size: 10px; }
+            #startScreen h1, #winScreen h1 { font-size: 26px; }
+            #gameOverScreen h1 { font-size: 26px; }
+            .level-btn { width: 44px; height: 44px; font-size: 16px; }
+        }
     </style>
 </head>
 <body>
@@ -185,16 +290,16 @@
 
         <!-- 开始界面 -->
         <div id="startScreen">
-            <h1>🥕 保卫萝卜</h1>
+            <h1>🍉 保卫西瓜</h1>
             <p class="subtitle">选择关卡开始游戏</p>
             <div class="level-select" id="levelSelect"></div>
-            <p style="color:#666;font-size:12px;margin-top:10px;">点击关卡开始，消灭所有怪物保护萝卜！</p>
+            <p style="color:#666;font-size:12px;margin-top:10px;">点击关卡开始，消灭所有怪物保护西瓜！</p>
         </div>
 
         <!-- 游戏结束界面 -->
         <div id="gameOverScreen" class="hidden">
             <h1>💀 游戏结束</h1>
-            <p class="subtitle">萝卜被怪物吃掉了...</p>
+            <p class="subtitle">西瓜被怪物吃掉了...</p>
             <p style="color:#ffd700;font-size:18px;margin-bottom:20px;" id="overScore"></p>
             <button class="btn btn-start" onclick="showStart()">重新开始</button>
         </div>
@@ -202,7 +307,7 @@
         <!-- 胜利界面 -->
         <div id="winScreen" class="hidden">
             <h1>🎉 关卡通过！</h1>
-            <p class="subtitle">萝卜安全了！</p>
+            <p class="subtitle">西瓜安全了！</p>
             <p style="color:#ffd700;font-size:18px;margin-bottom:20px;" id="winScore"></p>
             <div style="display:flex;gap:12px;">
                 <button class="btn btn-start" onclick="nextLevel()">下一关</button>
@@ -212,7 +317,7 @@
 
         <!-- 侧边栏 -->
         <div id="sidebar">
-            <div class="panel-title">🥕 保卫萝卜</div>
+            <div class="panel-title">🍉 保卫西瓜</div>
             <div>
                 <div class="info-row">
                     <span class="info-label">💰 金币</span>
@@ -253,6 +358,39 @@
     </div>
 
     <script>
+    // ============ 画布自适应缩放 ============
+    function resizeCanvas() {
+        let isMobile = window.innerWidth <= 1024;
+        let container = document.getElementById('gameContainer');
+
+        if (isMobile) {
+            // 移动端：画布宽度撑满屏幕，高度按比例
+            let sidebar = document.getElementById('sidebar');
+            let sidebarH = sidebar ? sidebar.offsetHeight : 250;
+            let availW = window.innerWidth;
+            let availH = window.innerHeight - sidebarH;
+            let scale = Math.min(availW / 800, availH / 600);
+            let w = Math.floor(800 * scale);
+            let h = Math.floor(600 * scale);
+            canvas.style.width = w + 'px';
+            canvas.style.height = h + 'px';
+            canvas.style.margin = '0 auto';
+        } else {
+            // PC端：正常显示
+            canvas.style.width = '800px';
+            canvas.style.height = '600px';
+        }
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 100));
+
+    // 阻止移动端默认手势（缩放、滚动等）
+    document.addEventListener('touchmove', function(e) {
+        if (e.target === canvas || e.target.closest('#gameContainer')) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
     // ============ 游戏配置 ============
     const TILE = 40;
     const COLS = 20, ROWS = 15;
@@ -318,7 +456,7 @@
         {
             name: '绿野仙踪',
             bg: '#2d5a1e', pathColor: '#c8a96e',
-            path: [[-1,7],[3,7],[3,3],[7,3],[7,11],[11,11],[11,5],[15,5],[15,9],[20,9]],
+            path: [[-1,7],[3,7],[3,3],[7,3],[7,11],[11,11],[11,5],[15,5],[15,9],[18,9]],
             startGold: 200, waves: [
                 { monsters: [{type:'normal',count:8,interval:1200}] },
                 { monsters: [{type:'normal',count:10,interval:1000},{type:'fast',count:3,interval:800}] },
@@ -328,7 +466,7 @@
         {
             name: '沙漠风暴',
             bg: '#8b6914', pathColor: '#d4a574',
-            path: [[-1,3],[5,3],[5,12],[9,12],[9,2],[13,2],[13,10],[20,10]],
+            path: [[-1,3],[5,3],[5,12],[9,12],[9,2],[13,2],[13,10],[18,10]],
             startGold: 250, waves: [
                 { monsters: [{type:'fast',count:10,interval:800}] },
                 { monsters: [{type:'normal',count:12,interval:900},{type:'fast',count:5,interval:700}] },
@@ -339,7 +477,7 @@
         {
             name: '冰雪奇缘',
             bg: '#1a3a4a', pathColor: '#a0c4d8',
-            path: [[-1,10],[4,10],[4,2],[8,2],[8,13],[12,13],[12,4],[16,4],[16,11],[20,11]],
+            path: [[-1,10],[4,10],[4,2],[8,2],[8,13],[12,13],[12,4],[16,4],[16,11],[18,11]],
             startGold: 300, waves: [
                 { monsters: [{type:'normal',count:15,interval:700}] },
                 { monsters: [{type:'fast',count:12,interval:600},{type:'tank',count:3,interval:1500}] },
@@ -350,7 +488,7 @@
         {
             name: '火山地狱',
             bg: '#3a1a0a', pathColor: '#c06030',
-            path: [[-1,5],[3,5],[3,13],[7,13],[7,1],[11,1],[11,11],[15,11],[15,3],[20,3]],
+            path: [[-1,5],[3,5],[3,13],[7,13],[7,1],[11,1],[11,11],[15,11],[15,3],[18,3]],
             startGold: 350, waves: [
                 { monsters: [{type:'fast',count:15,interval:500}] },
                 { monsters: [{type:'tank',count:8,interval:1000},{type:'normal',count:15,interval:600}] },
@@ -361,7 +499,7 @@
         {
             name: '星空决战',
             bg: '#0a0a2e', pathColor: '#6060a0',
-            path: [[-1,1],[4,1],[4,14],[9,14],[9,1],[14,1],[14,14],[19,14],[19,7],[20,7]],
+            path: [[-1,1],[4,1],[4,14],[9,14],[9,1],[14,1],[14,14],[17,14],[17,7],[18,7]],
             startGold: 400, waves: [
                 { monsters: [{type:'tank',count:10,interval:800},{type:'fast',count:10,interval:400}] },
                 { monsters: [{type:'boss',count:2,interval:2000},{type:'tank',count:8,interval:900},{type:'normal',count:20,interval:500}] },
@@ -381,6 +519,7 @@
         pathPixels: [], pathGrid: [], grid: [],
         unlockedLevels: 1, carrotHp: 20, maxCarrotHp: 20,
         carrotPos: { x: 0, y: 0 }, carrotAnim: 0,
+        eatingAnim: false, eatingTimer: 0, eatingMonster: null,
         particles: [], floatingTexts: []
     };
 
@@ -729,11 +868,15 @@
                     m.pathProgress = 0;
                     m.pathIndex++;
                     if (m.pathIndex >= level.path.length - 1) {
-                        // Reached carrot
+                        // Reached watermelon
                         m.alive = false;
+                        game.eatingAnim = true;
+                        game.eatingTimer = 50;
+                        game.eatingMonster = { color: m.color, size: m.size };
                         game.lives--;
                         game.carrotHp--;
-                        addParticles(game.carrotPos.x, game.carrotPos.y, '#ff5252', 5);
+                        addParticles(game.carrotPos.x, game.carrotPos.y, '#ff5252', 8);
+                        addFloatingText('-1 ❤️', game.carrotPos.x, game.carrotPos.y - 20, '#ff5252');
                         if (game.lives <= 0) {
                             gameOver();
                             return;
@@ -969,41 +1112,167 @@
             ctx.strokeRect(t.gx * TILE, t.gy * TILE, TILE, TILE);
         }
 
-        // Draw carrot
+        // Draw watermelon
         let cx = game.carrotPos.x;
         let cy = game.carrotPos.y + Math.sin(game.carrotAnim) * 3;
-        // Carrot body
         ctx.save();
         ctx.translate(cx, cy);
-        // Leaves
-        ctx.fillStyle = '#4caf50';
+
+        // Draw watermelon safe zone background
+        ctx.fillStyle = 'rgba(255,235,59,0.08)';
         ctx.beginPath();
-        ctx.ellipse(-5, -18, 4, 10, -0.3, 0, Math.PI * 2);
+        ctx.arc(cx, cy, 28, 0, Math.PI * 2);
         ctx.fill();
+        ctx.strokeStyle = 'rgba(255,235,59,0.25)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Eating animation - watermelon shakes and monster bites
+        let shakeX = 0, shakeY = 0;
+        let eatAlpha = 0;
+        if (game.eatingAnim) {
+            game.eatingTimer--;
+            shakeX = (Math.random() - 0.5) * 8;
+            shakeY = (Math.random() - 0.5) * 8;
+            ctx.translate(shakeX, shakeY);
+            eatAlpha = Math.min(1, game.eatingTimer / 15);
+
+            if (game.eatingTimer <= 0) {
+                game.eatingAnim = false;
+                game.eatingMonster = null;
+            }
+        }
+
+        // Watermelon body (circle)
+        ctx.fillStyle = '#2e7d32';
         ctx.beginPath();
-        ctx.ellipse(5, -18, 4, 10, 0.3, 0, Math.PI * 2);
+        ctx.arc(0, 0, 18, 0, Math.PI * 2);
         ctx.fill();
+
+        // Watermelon stripes
+        ctx.strokeStyle = '#1b5e20';
+        ctx.lineWidth = 2.5;
+        for (let i = -2; i <= 2; i++) {
+            ctx.beginPath();
+            ctx.arc(i * 7, 0, 18, -0.6, 0.6);
+            ctx.stroke();
+        }
+
+        // Watermelon highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
         ctx.beginPath();
-        ctx.ellipse(0, -20, 3, 8, 0, 0, Math.PI * 2);
+        ctx.ellipse(-5, -6, 8, 5, -0.5, 0, Math.PI * 2);
         ctx.fill();
-        // Carrot
-        ctx.fillStyle = '#ff9800';
-        ctx.beginPath();
-        ctx.moveTo(-10, 0);
-        ctx.quadraticCurveTo(-12, 15, 0, 22);
-        ctx.quadraticCurveTo(12, 15, 10, 0);
-        ctx.closePath();
-        ctx.fill();
+
+        // Cute face
         // Eyes
         ctx.fillStyle = '#333';
-        ctx.beginPath(); ctx.arc(-4, -4, 2, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(4, -4, 2, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-5, -3, 2.5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(5, -3, 2.5, 0, Math.PI * 2); ctx.fill();
+        // Eye highlights
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(-4, -4, 1, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(6, -4, 1, 0, Math.PI * 2); ctx.fill();
+        // Blush
+        ctx.fillStyle = 'rgba(255,100,100,0.4)';
+        ctx.beginPath(); ctx.ellipse(-9, 3, 4, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(9, 3, 4, 2.5, 0, 0, Math.PI * 2); ctx.fill();
         // Smile
         ctx.strokeStyle = '#333';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.arc(0, -2, 4, 0.2, Math.PI - 0.2);
+        ctx.arc(0, 0, 5, 0.2, Math.PI - 0.2);
         ctx.stroke();
+
+        // Eating damage indicator - bite marks
+        if (game.carrotHp < game.maxCarrotHp) {
+            let damagePct = 1 - (game.carrotHp / game.maxCarrotHp);
+            ctx.fillStyle = '#ff5252';
+            ctx.globalAlpha = damagePct * 0.8;
+            let biteSize = 5 + damagePct * 10;
+            // Multiple bite marks
+            ctx.beginPath();
+            ctx.arc(12, 6, biteSize, 0, Math.PI * 2);
+            ctx.fill();
+            if (damagePct > 0.3) {
+                ctx.beginPath();
+                ctx.arc(-10, 8, biteSize * 0.6, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            if (damagePct > 0.6) {
+                ctx.beginPath();
+                ctx.arc(5, -14, biteSize * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            // Red flesh exposed
+            ctx.fillStyle = '#e53935';
+            ctx.beginPath();
+            ctx.arc(12, 6, biteSize * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+
+            // Sad face when hurt
+            if (damagePct > 0.3) {
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1.5;
+                // Change smile to frown
+                ctx.beginPath();
+                ctx.arc(0, 8, 5, Math.PI + 0.2, -0.2);
+                ctx.stroke();
+                // Tears
+                ctx.fillStyle = '#42a5f5';
+                ctx.globalAlpha = damagePct;
+                ctx.beginPath();
+                ctx.ellipse(-7, 1, 1.5, 3, 0.2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(7, 1, 1.5, 3, -0.2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        // Eating animation - monster chomping overlay
+        if (game.eatingAnim && game.eatingMonster) {
+            let em = game.eatingMonster;
+            let chompPhase = Math.sin(game.eatingTimer * 0.4);
+            // Monster body approaching from right
+            let monsterX = 22 - eatAlpha * 4;
+            ctx.fillStyle = em.color;
+            ctx.globalAlpha = eatAlpha;
+            ctx.beginPath();
+            ctx.arc(monsterX, 2, em.size * 0.9, 0, Math.PI * 2);
+            ctx.fill();
+            // Monster eyes (angry)
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.arc(monsterX - 3, -2, 3, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#333';
+            ctx.beginPath(); ctx.arc(monsterX - 2, -2, 1.5, 0, Math.PI * 2); ctx.fill();
+            // Teeth (chomping)
+            ctx.fillStyle = '#fff';
+            let teethOpen = Math.abs(chompPhase) * 3;
+            for (let i = 0; i < 4; i++) {
+                ctx.beginPath();
+                let tx = monsterX - 10 + i * 5;
+                ctx.moveTo(tx, 8 + teethOpen);
+                ctx.lineTo(tx + 2, 8 + teethOpen + 4);
+                ctx.lineTo(tx + 4, 8 + teethOpen);
+                ctx.fill();
+            }
+            // Muzzle flash effect
+            ctx.fillStyle = 'rgba(255,82,82,0.4)';
+            ctx.beginPath();
+            ctx.arc(10, 5, 8 + Math.random() * 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            // Chomp particles
+            if (game.eatingTimer % 3 === 0) {
+                addParticles(cx + 12, cy + 5, '#ff5252', 3);
+            }
+        }
+
         ctx.restore();
 
         // HP bar for carrot
@@ -1151,7 +1420,7 @@
         ctx.globalAlpha = 1;
     }
 
-    // ============ 鼠标交互 ============
+    // ============ 鼠标 & 触摸交互 ============
     let mouseX = 0, mouseY = 0;
 
     canvas.addEventListener('mousemove', (e) => {
@@ -1164,6 +1433,34 @@
         let rect = canvas.getBoundingClientRect();
         let mx = (e.clientX - rect.left) * (800 / rect.width);
         let my = (e.clientY - rect.top) * (600 / rect.height);
+        handleCanvasTap(mx, my);
+    });
+
+    // 触摸事件
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        let touch = e.touches[0];
+        mouseX = touch.clientX;
+        mouseY = touch.clientY;
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        let touch = e.touches[0];
+        mouseX = touch.clientX;
+        mouseY = touch.clientY;
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        if (!game.running) return;
+        let rect = canvas.getBoundingClientRect();
+        let mx = (mouseX - rect.left) * (800 / rect.width);
+        let my = (mouseY - rect.top) * (600 / rect.height);
+        handleCanvasTap(mx, my);
+    }, { passive: false });
+
+    function handleCanvasTap(mx, my) {
         let gx = Math.floor(mx / TILE);
         let gy = Math.floor(my / TILE);
 
@@ -1188,7 +1485,7 @@
             game.selectedTower = null;
         }
         updateUI();
-    });
+    }
 
     // ============ 游戏循环 ============
     function gameLoop() {
@@ -1203,6 +1500,7 @@
 
     // ============ 启动 ============
     showStart();
+    resizeCanvas();
     gameLoop();
     </script>
 </body>
