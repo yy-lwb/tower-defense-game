@@ -169,25 +169,244 @@
             font-size: 16px;
             margin-bottom: 30px;
         }
-        .level-select {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        .level-btn {
-            width: 60px; height: 60px;
-            border: 3px solid rgba(255,215,0,0.4);
-            border-radius: 10px;
-            background: rgba(255,215,0,0.1);
+        /* ===== 关卡选择页面重构 ===== */
+        .level-section-title {
             color: #ffd700;
-            font-size: 22px;
+            font-size: 13px;
             font-weight: bold;
+            text-align: left;
+            width: 90%;
+            max-width: 460px;
+            margin: 0 auto 8px;
+            padding-left: 2px;
+            letter-spacing: 1px;
+        }
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            width: 90%;
+            max-width: 460px;
+            margin: 0 auto 16px;
+        }
+        .level-card {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            border: 3px solid rgba(76,175,80,0.5);
+            border-radius: 14px;
+            background: linear-gradient(145deg, rgba(76,175,80,0.25), rgba(76,175,80,0.08));
+            color: #4caf50;
+            font-size: 24px;
+            font-weight: 900;
             cursor: pointer;
+            transition: all 0.25s cubic-bezier(.4,0,.2,1);
+            touch-action: manipulation;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .level-card:hover:not(.locked) {
+            border-color: #ffd700;
+            background: linear-gradient(145deg, rgba(255,215,0,0.3), rgba(76,175,80,0.15));
+            transform: scale(1.08) translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255,215,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+        .level-card:active:not(.locked) { transform: scale(0.96); }
+        .level-card .card-num { line-height: 1; }
+        .level-card .card-name {
+            font-size: 9px;
+            font-weight: 600;
+            margin-top: 3px;
+            opacity: 0.85;
+            letter-spacing: 0.5px;
+        }
+        .level-card .card-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            font-size: 14px;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+        }
+        .level-card .card-stars {
+            font-size: 9px;
+            margin-top: 1px;
+            letter-spacing: 1px;
+        }
+        .level-card.locked {
+            opacity: 0.35;
+            cursor: not-allowed;
+            border-color: rgba(255,255,255,0.1);
+            background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(0,0,0,0.1));
+            color: #666;
+            filter: grayscale(0.8);
+        }
+        .level-card.locked .card-num::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+        }
+        .level-card.golden {
+            border-color: #ffd700;
+            background: linear-gradient(145deg, rgba(255,215,0,0.35), rgba(255,160,0,0.12));
+            box-shadow: 0 0 18px rgba(255,215,0,0.25), 0 3px 12px rgba(0,0,0,0.3);
+        }
+        .level-card.theme-farm {
+            border-color: rgba(139,195,74,0.6);
+            background: linear-gradient(145deg, rgba(139,195,74,0.25), rgba(139,195,74,0.08));
+            color: #8bc34a;
+        }
+        .level-card.theme-farm:hover:not(.locked) {
+            border-color: #cddc39;
+            background: linear-gradient(145deg, rgba(205,220,57,0.25), rgba(139,195,74,0.12));
+            box-shadow: 0 6px 20px rgba(205,220,57,0.25);
+        }
+        .level-card.theme-hidden {
+            border-color: rgba(224,64,251,0.4);
+            background: linear-gradient(145deg, rgba(224,64,251,0.2), rgba(124,77,255,0.08));
+            color: #e040fb;
+        }
+        .level-card.theme-hidden:hover:not(.locked) {
+            border-color: #e040fb;
+            box-shadow: 0 6px 20px rgba(224,64,251,0.3);
+        }
+
+        /* 秘境探索区域 */
+        .secret-realm {
+            width: 90%;
+            max-width: 460px;
+            margin: 0 auto 12px;
+            background: linear-gradient(135deg, rgba(30,15,60,0.8), rgba(15,25,50,0.8));
+            border: 2px solid rgba(224,64,251,0.25);
+            border-radius: 14px;
+            padding: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        .secret-realm::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(224,64,251,0.03) 10px,
+                rgba(224,64,251,0.03) 20px
+            );
+            pointer-events: none;
+        }
+        .secret-realm-title {
+            color: #ce93d8;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .secret-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(224,64,251,0.15);
+            border-radius: 10px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .secret-item:last-child { margin-bottom: 0; }
+        .secret-item:hover {
+            background: rgba(224,64,251,0.08);
+            border-color: rgba(224,64,251,0.35);
+        }
+        .secret-item .secret-icon {
+            font-size: 22px;
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(224,64,251,0.1);
+            border-radius: 8px;
+        }
+        .secret-item .secret-info { flex: 1; min-width: 0; }
+        .secret-item .secret-name {
+            color: #e040fb;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .secret-item .secret-cond {
+            color: #888;
+            font-size: 10px;
+            margin-top: 2px;
+        }
+        .secret-item .secret-bar {
+            height: 4px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 2px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        .secret-item .secret-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e040fb, #7c4dff);
+            border-radius: 2px;
+            transition: width 0.5s;
+        }
+        .secret-item.unlocked {
+            border-color: rgba(76,175,80,0.4);
+            background: rgba(76,175,80,0.08);
+        }
+        .secret-item.unlocked .secret-name { color: #66bb6a; }
+        .secret-item.unlocked .secret-icon { background: rgba(76,175,80,0.12); }
+
+        /* 底部操作栏 */
+        .bottom-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 90%;
+            max-width: 460px;
+            margin: 4px auto 0;
+            gap: 8px;
+        }
+        .bottom-bar-left, .bottom-bar-right {
+            display: flex;
+            gap: 6px;
+        }
+        .bar-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            border: 2px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.06);
+            color: #aaa;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: all 0.2s;
             touch-action: manipulation;
         }
-        .level-btn:hover { border-color: #ffd700; background: rgba(255,215,0,0.3); transform: scale(1.1); }
-        .level-btn.locked { opacity: 0.3; cursor: not-allowed; }
+        .bar-btn:hover {
+            border-color: rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.12);
+            color: #fff;
+            transform: scale(1.05);
+        }
         .hidden { display: none !important; }
         .speed-btn {
             font-size: 11px;
@@ -306,10 +525,13 @@
                 font-size: 32px;
             }
             .subtitle { font-size: 14px; margin-bottom: 20px; }
-            .level-btn {
-                width: 50px; height: 50px;
-                font-size: 18px;
-            }
+            .level-grid { grid-template-columns: repeat(5, 1fr); gap: 8px; }
+            .level-card { border-radius: 12px; font-size: 20px; }
+            .level-card .card-name { font-size: 8px; }
+            .secret-realm { padding: 10px; }
+            .secret-item { padding: 7px 8px; }
+            .secret-item .secret-icon { width: 32px; height: 32px; font-size: 18px; }
+            .bar-btn { width: 38px; height: 38px; font-size: 16px; }
         }
 
         @media (max-width: 480px) {
@@ -319,7 +541,12 @@
             .tower-name { font-size: 10px; }
             #startScreen h1, #winScreen h1 { font-size: 26px; }
             #gameOverScreen h1 { font-size: 26px; }
-            .level-btn { width: 44px; height: 44px; font-size: 16px; }
+            .level-card { font-size: 17px; border-radius: 10px; }
+            .level-card .card-name { font-size: 7px; }
+            .level-card .card-badge { font-size: 11px; top: -3px; right: -3px; }
+            .level-grid { gap: 6px; }
+            .secret-item .secret-name { font-size: 12px; }
+            .bar-btn { width: 36px; height: 36px; font-size: 15px; }
         }
     </style>
 </head>
@@ -331,14 +558,27 @@
         <div id="startScreen">
             <h1>🍉 保卫西瓜</h1>
             <p class="subtitle">选择关卡开始游戏</p>
-            <div class="level-select" id="levelSelect"></div>
-            <!-- 解锁进度展示 -->
-            <div id="unlockProgress" style="width:90%;max-width:420px;margin:8px 0;"></div>
-            <div style="display:flex;gap:10px;margin-top:4px;">
-                <button class="btn" style="background:linear-gradient(135deg,#7c4dff,#e040fb);color:#fff;font-size:13px;" onclick="openNest()">🥚 怪物窝</button>
-                <button class="btn" style="background:linear-gradient(135deg,#00796b,#26a69a);color:#fff;font-size:13px;" onclick="showUnlockGuide()">🔑 解锁指南</button>
+            <!-- 主线关卡 -->
+            <div class="level-section-title">⚔️ 核心战场</div>
+            <div class="level-grid" id="mainLevelGrid"></div>
+            <!-- 夏日田园关卡 -->
+            <div class="level-section-title">🌾 夏日田园</div>
+            <div class="level-grid" id="farmLevelGrid"></div>
+            <!-- 秘境探索（隐藏关卡） -->
+            <div class="secret-realm" id="secretRealm">
+                <div class="secret-realm-title">🔮 秘境探索</div>
+                <div id="secretContent"></div>
             </div>
-            <p style="color:#666;font-size:11px;margin-top:8px;">💡 满足条件可解锁隐藏关卡</p>
+            <!-- 底部操作栏 -->
+            <div class="bottom-bar">
+                <div class="bottom-bar-left">
+                    <div class="bar-btn" onclick="openNest()" title="怪物窝">🥚</div>
+                    <div class="bar-btn" onclick="showUnlockGuide()" title="解锁指南">❓</div>
+                </div>
+                <div class="bottom-bar-right">
+                    <div class="bar-btn" onclick="resetGame()" title="重置进度">🔄</div>
+                </div>
+            </div>
         </div>
 
         <!-- 游戏结束界面 -->
@@ -1074,7 +1314,8 @@
     }
 
     function renderLevelSelect() {
-        let html = '';
+        // 分类关卡：主线(0-4)、隐藏(5-7)、田园(8-10)
+        let mainHtml = '', farmHtml = '';
         for (let i = 0; i < LEVELS.length; i++) {
             let level = LEVELS[i];
             let locked = false;
@@ -1084,41 +1325,100 @@
                 locked = i >= game.unlockedLevels;
             }
             let stars = game.levelStars[i];
-            let starStr = stars ? (stars.goldenCarrot ? '🏆' : '⭐') + stars.stars : (locked ? '🔒' : '');
-            let bgStyle = (stars && stars.goldenCarrot) ? 'border-color:#ffd700;background:rgba(255,215,0,0.25);' : '';
-            if (locked && level.hidden) bgStyle = 'border-color:rgba(224,64,251,0.4);background:rgba(224,64,251,0.1);';
+            let isGolden = stars && stars.goldenCarrot;
+            let starCount = stars ? stars.stars : 0;
 
-            let displayNum = level.hidden ? (locked ? level.unlockIcon || '🔒' : level.name.split(' ')[0]) : (i + 1);
-            html += `<div class="level-btn ${locked ? 'locked' : ''}" style="${bgStyle}font-size:${level.hidden ? '16' : '22'}px;"
-                onclick="${locked ? `showLockTip(${i})` : `startLevel(${i})`}" title="${level.name}">
-                ${displayNum}<br><span style="font-size:9px;">${locked ? '锁定' : (starStr || level.name.substring(0,2))}</span>
+            // 构建卡片类名
+            let cls = 'level-card';
+            if (locked) cls += ' locked';
+            if (isGolden) cls += ' golden';
+            if (level.theme === 'farm') cls += ' theme-farm';
+
+            // 主线关卡名
+            let displayName, cardName;
+            if (level.hidden) {
+                if (locked) {
+                    displayName = '🔒';
+                    cardName = '???';
+                } else {
+                    displayName = level.name.split(' ')[0];
+                    cardName = level.name.replace(/^[^\s]+\s/, '');
+                }
+            } else if (level.theme === 'farm') {
+                displayName = level.name.split(' ')[0];
+                cardName = level.name.replace(/^[^\s]+\s/, '');
+            } else {
+                displayName = (i + 1);
+                cardName = level.name;
+            }
+
+            // 徽标
+            let badge = '';
+            if (locked && !level.hidden) badge = '';
+            else if (locked && level.hidden) badge = '';
+            else if (isGolden) badge = '<div class="card-badge">🏆</div>';
+            else if (starCount > 0) badge = `<div class="card-badge">⭐</div>`;
+
+            // 星级显示
+            let starStr = '';
+            if (!locked && starCount > 0) {
+                starStr = '<div class="card-stars">' + '★'.repeat(starCount) + '☆'.repeat(3 - starCount) + '</div>';
+            }
+
+            let onclick = locked ? `showLockTip(${i})` : `startLevel(${i})`;
+
+            let cardHtml = `<div class="${cls}" onclick="${onclick}" title="${level.name}">
+                <div class="card-num">${displayName}</div>
+                <div class="card-name">${cardName}</div>
+                ${starStr}
+                ${badge}
             </div>`;
-        }
-        document.getElementById('levelSelect').innerHTML = html;
 
-        // 显示解锁进度
-        renderUnlockProgress();
+            if (level.theme === 'farm') {
+                farmHtml += cardHtml;
+            } else if (!level.hidden) {
+                mainHtml += cardHtml;
+            }
+            // 隐藏关卡不放在 grid 里，放在秘境探索区
+        }
+
+        document.getElementById('mainLevelGrid').innerHTML = mainHtml;
+        document.getElementById('farmLevelGrid').innerHTML = farmHtml;
+
+        // 渲染秘境探索区
+        renderSecretRealm();
     }
 
-    function renderUnlockProgress() {
-        let el = document.getElementById('unlockProgress');
+    function renderSecretRealm() {
+        let el = document.getElementById('secretContent');
         if (!el) return;
         let html = '';
-        // 检查每个隐藏关的解锁进度
+        // 渲染隐藏关卡（索引 5-7）
         for (let i = 0; i < LEVELS.length; i++) {
             let level = LEVELS[i];
-            if (!level.hidden || game.hiddenUnlocked[i]) continue;
+            if (!level.hidden) continue;
+
+            let isUnlocked = game.hiddenUnlocked[i];
             let progress = getUnlockProgress(i);
-            html += `<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(224,64,251,0.3);border-radius:8px;padding:8px 12px;margin-bottom:6px;font-size:12px;">
-                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-                    <span>${level.unlockIcon || '🔒'}</span>
-                    <span style="color:#e040fb;font-weight:bold;">${level.name}</span>
-                    <span style="color:#666;font-size:11px;">${level.unlockDesc}</span>
+            let stars = game.levelStars[i];
+            let isGolden = stars && stars.goldenCarrot;
+            let starCount = stars ? stars.stars : 0;
+
+            let itemCls = 'secret-item';
+            if (isUnlocked) itemCls += ' unlocked';
+
+            let statusText = '';
+            if (isUnlocked) {
+                statusText = isGolden ? '🏆 金西瓜' : (starCount > 0 ? '⭐'.repeat(starCount) + '☆'.repeat(3 - starCount) : '可挑战');
+            }
+
+            html += `<div class="${itemCls}" onclick="${isUnlocked ? `startLevel(${i})` : `showLockTip(${i})`}">
+                <div class="secret-icon">${isUnlocked ? (level.name.split(' ')[0] || '🎮') : (level.unlockIcon || '🔒')}</div>
+                <div class="secret-info">
+                    <div class="secret-name">${level.name} ${statusText}</div>
+                    <div class="secret-cond">${isUnlocked ? '已解锁' : level.unlockDesc}</div>
+                    ${!isUnlocked ? `<div class="secret-bar"><div class="secret-bar-fill" style="width:${progress.pct}%"></div></div>` : ''}
                 </div>
-                <div style="height:5px;background:rgba(255,255,255,0.1);border-radius:3px;">
-                    <div style="height:5px;background:linear-gradient(90deg,#e040fb,#7c4dff);border-radius:3px;width:${progress.pct}%;transition:width 0.5s;"></div>
-                </div>
-                <div style="color:#aaa;font-size:10px;margin-top:3px;">${progress.text}</div>
             </div>`;
         }
         el.innerHTML = html;
@@ -1749,6 +2049,18 @@
         let popup = document.getElementById('newUnlockPopup');
         popup.style.display = 'none';
         popup.classList.add('hidden');
+    }
+
+    function resetGame() {
+        if (!confirm('确定要重置所有游戏进度吗？\n（包括关卡、怪物蛋、评价等）')) return;
+        localStorage.removeItem('watermelon_save');
+        game.unlockedLevels = 1;
+        game.eggs = [];
+        game.feedItems = { milk: 0, cookie: 0 };
+        game.hatchedCount = 0;
+        game.levelStars = {};
+        game.hiddenUnlocked = {};
+        renderLevelSelect();
     }
 
     // ======== 怪物窝系统 ========
