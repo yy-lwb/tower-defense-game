@@ -137,6 +137,19 @@
             border-radius: 12px;
             z-index: 10;
         }
+        #monsterNest, #unlockGuide {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.92);
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 20px 16px;
+            overflow-y: auto;
+            border-radius: 12px;
+            z-index: 15;
+        }
         #startScreen h1, #winScreen h1 {
             font-size: 48px;
             color: #ffd700;
@@ -293,10 +306,13 @@
             <h1>🍉 保卫西瓜</h1>
             <p class="subtitle">选择关卡开始游戏</p>
             <div class="level-select" id="levelSelect"></div>
-            <div style="margin-top:12px;">
+            <!-- 解锁进度展示 -->
+            <div id="unlockProgress" style="width:90%;max-width:420px;margin:8px 0;"></div>
+            <div style="display:flex;gap:10px;margin-top:4px;">
                 <button class="btn" style="background:linear-gradient(135deg,#7c4dff,#e040fb);color:#fff;font-size:13px;" onclick="openNest()">🥚 怪物窝</button>
+                <button class="btn" style="background:linear-gradient(135deg,#00796b,#26a69a);color:#fff;font-size:13px;" onclick="showUnlockGuide()">🔑 解锁指南</button>
             </div>
-            <p style="color:#666;font-size:12px;margin-top:10px;">🏆 获得金萝卜+清除障碍物可解锁隐藏关卡</p>
+            <p style="color:#666;font-size:11px;margin-top:8px;">💡 满足条件可解锁隐藏关卡</p>
         </div>
 
         <!-- 游戏结束界面 -->
@@ -321,11 +337,26 @@
         </div>
 
         <!-- 怪物窝界面 -->
-        <div id="monsterNest" class="hidden">
-            <h1 style="font-size:36px;">🥚 怪物窝</h1>
-            <p class="subtitle">孵化并喂养你的怪物</p>
-            <div id="nestContent" style="width:90%;max-width:400px;max-height:60vh;overflow-y:auto;"></div>
-            <button class="btn btn-start" style="margin-top:15px;" onclick="closeNest()">返回</button>
+        <div id="monsterNest" class="hidden" style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);display:none;flex-direction:column;align-items:center;justify-content:flex-start;padding:20px;overflow-y:auto;z-index:20;border-radius:12px;">
+            <h1 style="font-size:32px;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,0.5);margin-bottom:4px;">🥚 怪物窝</h1>
+            <p style="color:#aaa;font-size:13px;margin-bottom:12px;">孵化并喂养你的怪物，解锁隐藏关卡</p>
+            <div id="nestContent" style="width:100%;max-width:420px;"></div>
+            <button class="btn btn-start" style="margin-top:12px;" onclick="closeNest()">← 返回</button>
+        </div>
+
+        <!-- 解锁指南弹窗 -->
+        <div id="unlockGuide" class="hidden" style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);display:none;flex-direction:column;align-items:center;justify-content:flex-start;padding:20px;overflow-y:auto;z-index:20;border-radius:12px;">
+            <h1 style="font-size:28px;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,0.5);margin-bottom:4px;">🔑 隐藏关卡解锁指南</h1>
+            <div id="unlockGuideContent" style="width:100%;max-width:440px;margin-top:10px;"></div>
+            <button class="btn btn-start" style="margin-top:15px;" onclick="closeUnlockGuide()">← 返回</button>
+        </div>
+
+        <!-- 通关新解锁提示弹窗 -->
+        <div id="newUnlockPopup" class="hidden" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,rgba(20,10,60,0.98),rgba(10,30,60,0.98));border:2px solid #e040fb;border-radius:16px;padding:20px;z-index:30;min-width:260px;text-align:center;box-shadow:0 0 30px rgba(224,64,251,0.5);">
+            <div style="font-size:32px;margin-bottom:8px;">🎉</div>
+            <div style="color:#e040fb;font-weight:bold;font-size:16px;margin-bottom:6px;">解锁新关卡！</div>
+            <div id="newUnlockText" style="color:#ddd;font-size:13px;margin-bottom:14px;"></div>
+            <button class="btn" style="background:linear-gradient(135deg,#e040fb,#7c4dff);color:#fff;" onclick="closeUnlockPopup()">太好了！</button>
         </div>
 
         <!-- 侧边栏 -->
@@ -559,8 +590,13 @@
             ],
             obstacles: [{x:4,y:6,type:'apple'},{x:8,y:7,type:'apple'},{x:12,y:6,type:'apple'},{x:4,y:10,type:'apple'},{x:8,y:5,type:'apple'},{x:16,y:8,type:'apple'}],
             rewards: { eggs: 2, milk: 4, cookie: 3 },
-            hidden: true, unlockReq: 'eggHatch', // 需要孵化1只怪物
-            hiddenTask: { desc: '不吃一颗星通关（保持20颗星）', type: 'maxStars' }
+            hidden: true,
+            unlockReq: 'eggHatch',
+            unlockDesc: '在怪物窝孵化1只怪物后解锁',
+            unlockIcon: '🥚',
+            hiddenTask: { desc: '全程零伤害（金西瓜）通关', type: 'maxStars' },
+            // 地图内的机关
+            mapTrigger: { x: 17, y: 1, icon: '🍎', desc: '点击树上的苹果', effectLevel: null }
         },
         {
             name: '🌊 深海秘境',
@@ -573,7 +609,30 @@
             ],
             obstacles: [{x:5,y:4,type:'coral'},{x:9,y:9,type:'coral'},{x:13,y:6,type:'coral'},{x:5,y:11,type:'coral'},{x:1,y:5,type:'coral'},{x:17,y:6,type:'coral'},{x:9,y:2,type:'coral'}],
             rewards: { eggs: 3, milk: 5, cookie: 4 },
-            hidden: true, unlockReq: 'perfect2' // 需要任意2关金萝卜+障碍全清
+            hidden: true,
+            unlockReq: 'perfect2',
+            unlockDesc: '任意2关获得金西瓜+道具全清后解锁',
+            unlockIcon: '🏆',
+            // 地图机关：找到第3波次Boss死亡后的传送门
+            mapTrigger: { x: 18, y: 13, icon: '🌀', desc: '第3波次击败Boss后点击传送门', requireBossKill: true }
+        },
+        // 第三个隐藏关：挑战模式
+        {
+            name: '⚔️ 挑战竞技场',
+            bg: '#1a0a2e', pathColor: '#9c27b0',
+            path: [[-1,7],[3,7],[3,2],[8,2],[8,12],[13,12],[13,3],[17,3],[17,11],[18,11]],
+            startGold: 500, waves: [
+                { monsters: [{type:'boss',count:3,interval:1500},{type:'fast',count:20,interval:300}] },
+                { monsters: [{type:'boss',count:5,interval:1200},{type:'tank',count:15,interval:600},{type:'fast',count:25,interval:200}] },
+                { monsters: [{type:'boss',count:8,interval:1000},{type:'tank',count:20,interval:500},{type:'fast',count:30,interval:150}] }
+            ],
+            obstacles: [{x:5,y:5,type:'star'},{x:10,y:5,type:'star'},{x:15,y:5,type:'star'},{x:5,y:10,type:'star'},{x:10,y:10,type:'star'},{x:15,y:8,type:'star'}],
+            rewards: { eggs: 3, milk: 6, cookie: 5 },
+            hidden: true,
+            unlockReq: 'collect10monsters',
+            unlockDesc: '收集10个怪物蛋（通关获得）后解锁',
+            unlockIcon: '🎯',
+            hiddenTask: { desc: '不升级任何炮塔通关', type: 'noUpgrade' }
         }
     ];
 
@@ -719,6 +778,7 @@
         game.levelStartTime = Date.now();
         game.towerTypesUsed = {};
         game.secretPortalActive = false;
+        game.bossKillCount = 0;
         document.getElementById('pauseBtn').textContent = '⏸ 暂停';
 
         // 初始化障碍物
@@ -839,24 +899,84 @@
             let level = LEVELS[i];
             let locked = false;
             if (level.hidden) {
-                // 隐藏关卡 - 检查是否已解锁
-                if (game.hiddenUnlocked[i]) {
-                    locked = false;
-                } else {
-                    locked = true;
-                }
+                locked = !game.hiddenUnlocked[i];
             } else {
                 locked = i >= game.unlockedLevels;
             }
             let stars = game.levelStars[i];
             let starStr = stars ? (stars.goldenCarrot ? '🏆' : '⭐') + stars.stars : (locked ? '🔒' : '');
-            let bgStyle = level.hidden && !locked ? '' :
-                (stars && stars.goldenCarrot ? 'border-color:#ffd700;background:rgba(255,215,0,0.2);' : '');
-            html += `<div class="level-btn ${locked ? 'locked' : ''}" style="${bgStyle}" onclick="${locked ? '' : 'startLevel(' + i + ')'}">
-                ${level.hidden && !locked ? '🔒' : (i + 1)}<br><span style="font-size:10px;">${starStr}</span>
+            let bgStyle = (stars && stars.goldenCarrot) ? 'border-color:#ffd700;background:rgba(255,215,0,0.25);' : '';
+            if (locked && level.hidden) bgStyle = 'border-color:rgba(224,64,251,0.4);background:rgba(224,64,251,0.1);';
+
+            let displayNum = level.hidden ? (locked ? level.unlockIcon || '🔒' : level.name.split(' ')[0]) : (i + 1);
+            html += `<div class="level-btn ${locked ? 'locked' : ''}" style="${bgStyle}font-size:${level.hidden ? '16' : '22'}px;"
+                onclick="${locked ? `showLockTip(${i})` : `startLevel(${i})`}" title="${level.name}">
+                ${displayNum}<br><span style="font-size:9px;">${locked ? '锁定' : (starStr || level.name.substring(0,2))}</span>
             </div>`;
         }
         document.getElementById('levelSelect').innerHTML = html;
+
+        // 显示解锁进度
+        renderUnlockProgress();
+    }
+
+    function renderUnlockProgress() {
+        let el = document.getElementById('unlockProgress');
+        if (!el) return;
+        let html = '';
+        // 检查每个隐藏关的解锁进度
+        for (let i = 0; i < LEVELS.length; i++) {
+            let level = LEVELS[i];
+            if (!level.hidden || game.hiddenUnlocked[i]) continue;
+            let progress = getUnlockProgress(i);
+            html += `<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(224,64,251,0.3);border-radius:8px;padding:8px 12px;margin-bottom:6px;font-size:12px;">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                    <span>${level.unlockIcon || '🔒'}</span>
+                    <span style="color:#e040fb;font-weight:bold;">${level.name}</span>
+                    <span style="color:#666;font-size:11px;">${level.unlockDesc}</span>
+                </div>
+                <div style="height:5px;background:rgba(255,255,255,0.1);border-radius:3px;">
+                    <div style="height:5px;background:linear-gradient(90deg,#e040fb,#7c4dff);border-radius:3px;width:${progress.pct}%;transition:width 0.5s;"></div>
+                </div>
+                <div style="color:#aaa;font-size:10px;margin-top:3px;">${progress.text}</div>
+            </div>`;
+        }
+        el.innerHTML = html;
+    }
+
+    function getUnlockProgress(levelIdx) {
+        let level = LEVELS[levelIdx];
+        if (!level.unlockReq) return { pct: 0, text: '?' };
+        if (level.unlockReq === 'eggHatch') {
+            let pct = Math.min(100, game.hatchedCount / 1 * 100);
+            return { pct, text: `已孵化 ${game.hatchedCount}/1 只怪物` };
+        }
+        if (level.unlockReq === 'perfect2') {
+            let count = Object.values(game.levelStars).filter(s => s.goldenCarrot && s.obstaclesCleared).length;
+            return { pct: Math.min(100, count / 2 * 100), text: `完美通关 ${count}/2 关（金西瓜+道具全清）` };
+        }
+        if (level.unlockReq === 'collect10monsters') {
+            let totalEggs = game.eggs.length + game.hatchedCount;
+            return { pct: Math.min(100, totalEggs / 10 * 100), text: `已收集 ${totalEggs}/10 怪物蛋` };
+        }
+        return { pct: 0, text: '未知条件' };
+    }
+
+    function showLockTip(levelIdx) {
+        let level = LEVELS[levelIdx];
+        if (!level) return;
+        let progress = getUnlockProgress(levelIdx);
+        // 显示小提示
+        let popup = document.getElementById('newUnlockPopup');
+        document.getElementById('newUnlockText').innerHTML = `
+            <div style="color:#e040fb;font-size:15px;margin-bottom:8px;">${level.name}</div>
+            <div style="color:#ddd;">${level.unlockDesc}</div>
+            <div style="margin-top:8px;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;">
+                <div style="height:6px;background:linear-gradient(90deg,#e040fb,#7c4dff);border-radius:3px;width:${progress.pct}%;"></div>
+            </div>
+            <div style="color:#888;font-size:11px;margin-top:4px;">${progress.text}</div>`;
+        popup.style.display = 'flex';
+        popup.classList.remove('hidden');
     }
 
     // ============ 游戏操作 ============
@@ -1168,12 +1288,21 @@
                     }
                 }
 
-                if (b.target.hp <= 0 && b.target.alive) {
+        if (b.target.hp <= 0 && b.target.alive) {
                     b.target.alive = false;
                     game.gold += b.target.reward;
                     game.score += b.target.reward;
                     addFloatingText(`+${b.target.reward}💰`, b.target.x, b.target.y, '#ffd700');
                     addParticles(b.target.x, b.target.y, b.target.color, 10);
+
+                    // Boss死亡 → 激活机关
+                    if (b.target.type === 'boss') {
+                        game.bossKillCount = (game.bossKillCount || 0) + 1;
+                        let level = LEVELS[game.currentLevel];
+                        if (level.mapTrigger && level.mapTrigger.requireBossKill && game.currentWave >= level.waves.length) {
+                            game.secretPortalActive = true;
+                        }
+                    }
                 }
             } else {
                 b.x += (dx / d) * b.speed * game.speed * 2;
@@ -1250,6 +1379,7 @@
             if (ht.type === 'timeLimit' && (Date.now() - game.levelStartTime) / 1000 <= ht.seconds) hiddenTaskDone = true;
             if (ht.type === 'minTowers' && game.towers.length >= ht.minCount) hiddenTaskDone = true;
             if (ht.type === 'maxStars' && game.damageTaken === 0) hiddenTaskDone = true;
+            if (ht.type === 'noUpgrade' && !Object.values(game.towers).some(t => t.level > 0)) hiddenTaskDone = true;
         }
 
         // 保存星级
@@ -1260,8 +1390,8 @@
             obstaclesCleared: obstaclesCleared || (prev.obstaclesCleared || false)
         };
 
-        // 解锁下一关
-        if (game.currentLevel + 1 >= game.unlockedLevels) {
+        // 解锁下一关（只对非隐藏关）
+        if (!level.hidden && game.currentLevel + 1 >= game.unlockedLevels) {
             game.unlockedLevels = Math.min(5, game.currentLevel + 2);
         }
 
@@ -1288,81 +1418,252 @@
 
         // 构建评价UI
         let ratingHtml = '';
-        ratingHtml += `<div style="font-size:24px;margin:5px 0;">${'⭐'.repeat(stars)}${'☆'.repeat(3 - stars)}</div>`;
-        if (goldenCarrot) ratingHtml += `<div style="color:#ffd700;font-weight:bold;">🏆 金西瓜！全程零伤害</div>`;
-        if (obstaclesCleared) ratingHtml += `<div style="color:#4caf50;">✅ 道具全清</div>`;
-        if (hiddenTaskDone) ratingHtml += `<div style="color:#e040fb;">🎯 隐藏任务完成！</div>`;
+        ratingHtml += `<div style="font-size:28px;margin:5px 0;letter-spacing:2px;">${'⭐'.repeat(stars)}${'☆'.repeat(3 - stars)}</div>`;
+        if (goldenCarrot) ratingHtml += `<div style="color:#ffd700;font-weight:bold;font-size:15px;margin:3px 0;">🏆 金西瓜！全程零伤害</div>`;
+        if (obstaclesCleared) ratingHtml += `<div style="color:#4caf50;font-size:14px;margin:3px 0;">✅ 道具全清</div>`;
+        if (goldenCarrot && obstaclesCleared) ratingHtml += `<div style="color:#e040fb;font-size:13px;margin:3px 0;">✨ 完美通关！</div>`;
+        if (hiddenTaskDone) ratingHtml += `<div style="color:#ff9800;font-weight:bold;font-size:14px;margin:3px 0;">🎯 隐藏任务完成！</div>`;
 
-        let rewardHtml = `<div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:10px;font-size:13px;color:#ddd;">
+        // 下一步解锁提示
+        let nextHintHtml = '';
+        let nextUnlock = getNextUnlockHint();
+        if (nextUnlock) {
+            nextHintHtml = `<div style="background:rgba(224,64,251,0.08);border:1px solid rgba(224,64,251,0.3);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;text-align:left;">
+                <div style="color:#e040fb;font-weight:bold;margin-bottom:3px;">🔑 下一个解锁目标</div>
+                <div style="color:#ccc;">${nextUnlock.name}：${nextUnlock.hint}</div>
+                <div style="margin-top:4px;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;">
+                    <div style="height:4px;background:linear-gradient(90deg,#e040fb,#7c4dff);border-radius:2px;width:${nextUnlock.pct}%;"></div>
+                </div>
+            </div>`;
+        }
+
+        let rewardHtml = `<div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:10px;font-size:13px;color:#ddd;margin-bottom:10px;">
             <div style="color:#ffd700;font-weight:bold;margin-bottom:6px;">🎁 本关奖励</div>
             ${eggsGained > 0 ? `<div>🥚 怪物蛋 x${eggsGained}</div>` : ''}
             ${rewards.milk ? `<div>🥛 牛奶 x${rewards.milk}</div>` : ''}
             ${rewards.cookie ? `<div>🍪 饼干 x${rewards.cookie}</div>` : ''}
+            ${!eggsGained && !rewards.milk && !rewards.cookie ? '<div style="color:#666;">无奖励</div>' : ''}
         </div>`;
 
         document.getElementById('winScore').textContent = `得分：${game.score}`;
         document.getElementById('winRating').innerHTML = ratingHtml;
-        document.getElementById('winRewards').innerHTML = rewardHtml;
+        document.getElementById('winRewards').innerHTML = nextHintHtml + rewardHtml;
         document.getElementById('winScreen').classList.remove('hidden');
+
+        // 检查地图机关是否激活
+        if (level.mapTrigger && !level.mapTrigger.requireBossKill) {
+            game.secretPortalActive = true;
+        }
+    }
+
+    function getNextUnlockHint() {
+        // 找第一个还没解锁的隐藏关
+        for (let i = 0; i < LEVELS.length; i++) {
+            let level = LEVELS[i];
+            if (!level.hidden || game.hiddenUnlocked[i]) continue;
+            let progress = getUnlockProgress(i);
+            return { name: level.name, hint: level.unlockDesc, pct: progress.pct };
+        }
+        return null;
     }
 
     function checkHiddenUnlocks() {
-        // 关卡6（果园迷阵）- 需要孵化1只怪物
+        let newlyUnlocked = [];
+
+        // 关卡5（果园迷阵，索引5）- 需要孵化1只怪物
         if (game.hatchedCount >= 1 && !game.hiddenUnlocked[5]) {
             game.hiddenUnlocked[5] = true;
-            addFloatingText('🔓 果园迷阵已解锁!', 400, 200, '#e040fb');
+            newlyUnlocked.push({ name: '🍎 果园迷阵', idx: 5, reason: '孵化了第一只怪物！' });
         }
-        // 关卡7（深海秘境）- 需要任意2关金萝卜+障碍全清
+        // 关卡6（深海秘境，索引6）- 需要任意2关金西瓜+障碍全清
         let perfectCount = Object.values(game.levelStars).filter(s => s.goldenCarrot && s.obstaclesCleared).length;
         if (perfectCount >= 2 && !game.hiddenUnlocked[6]) {
             game.hiddenUnlocked[6] = true;
+            newlyUnlocked.push({ name: '🌊 深海秘境', idx: 6, reason: '获得了2关金西瓜完美评价！' });
         }
+        // 关卡7（挑战竞技场，索引7）- 收集10蛋
+        let totalEggs = game.eggs.length + game.hatchedCount;
+        if (totalEggs >= 10 && !game.hiddenUnlocked[7]) {
+            game.hiddenUnlocked[7] = true;
+            newlyUnlocked.push({ name: '⚔️ 挑战竞技场', idx: 7, reason: '收集了10个怪物蛋！' });
+        }
+
+        // 显示解锁提示
+        if (newlyUnlocked.length > 0) {
+            let unlocked = newlyUnlocked[0]; // 每次只显示一个
+            setTimeout(() => {
+                document.getElementById('newUnlockText').innerHTML = `
+                    <div style="color:#e040fb;font-size:15px;margin-bottom:6px;">${unlocked.name} 已解锁！</div>
+                    <div style="color:#ccc;">${unlocked.reason}</div>
+                    <div style="color:#888;font-size:11px;margin-top:6px;">在关卡选择界面可以找到新关卡</div>`;
+                let popup = document.getElementById('newUnlockPopup');
+                popup.style.display = 'flex';
+                popup.classList.remove('hidden');
+            }, 800);
+        }
+    }
+
+    function showUnlockGuide() {
+        document.getElementById('startScreen').classList.add('hidden');
+        let guide = document.getElementById('unlockGuide');
+        guide.style.display = 'flex';
+        guide.classList.remove('hidden');
+
+        let html = `
+        <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:14px;margin-bottom:12px;border:1px solid rgba(255,215,0,0.3);">
+            <div style="color:#ffd700;font-weight:bold;font-size:14px;margin-bottom:8px;">🏆 方式一：完美评价解锁</div>
+            <p style="color:#ccc;font-size:12px;line-height:1.8;">
+                通关时获得 <span style="color:#ffd700;">金西瓜</span>（全程零伤害）并且 <span style="color:#4caf50;">道具全清</span>（清除所有障碍物），即视为完美通关。<br>
+                累计 <b style="color:#ffd700;">2</b> 关完美通关后，解锁 🌊 <b>深海秘境</b>。
+            </p>
+            <div style="margin-top:8px;padding:6px 10px;background:rgba(255,215,0,0.1);border-radius:6px;font-size:11px;color:#aaa;">
+                💡 提示：先清除地图上所有障碍物（花金币），再不被怪物伤害到终点通关
+            </div>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:14px;margin-bottom:12px;border:1px solid rgba(224,64,251,0.3);">
+            <div style="color:#e040fb;font-weight:bold;font-size:14px;margin-bottom:8px;">🥚 方式二：养成怪物窝</div>
+            <p style="color:#ccc;font-size:12px;line-height:1.8;">
+                通关后获得 <span style="color:#e040fb;">怪物蛋</span>，进入怪物窝：<br>
+                用 🥛 <b>牛奶</b> 喂蛋 → 孵化出幼崽 → 用 🍪 <b>饼干</b> 喂养长大<br>
+                <b>孵化 1 只</b>怪物 → 解锁 🍎 <b>果园迷阵</b><br>
+                <b>收集 10 个</b>蛋（含已孵化）→ 解锁 ⚔️ <b>挑战竞技场</b>
+            </p>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:14px;margin-bottom:12px;border:1px solid rgba(76,175,80,0.3);">
+            <div style="color:#4caf50;font-weight:bold;font-size:14px;margin-bottom:8px;">🎯 方式三：完成隐藏任务</div>
+            <p style="color:#ccc;font-size:12px;line-height:1.8;">
+                每关都有特殊的 <span style="color:#4caf50;">隐藏任务</span>，完成后获得额外评价：<br>
+                • 关卡1：只用瓶子塔通关<br>
+                • 关卡3：120秒内通关<br>
+                • 关卡5：放置至少6座炮塔<br>
+                • 果园迷阵：全程零伤害<br>
+                • 挑战竞技场：不升级任何炮塔
+            </p>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:14px;border:1px solid rgba(255,87,34,0.3);">
+            <div style="color:#ff5722;font-weight:bold;font-size:14px;margin-bottom:8px;">🔑 方式四：触发地图机关</div>
+            <p style="color:#ccc;font-size:12px;line-height:1.8;">
+                地图边角藏有 <span style="color:#ff5722;">隐藏机关</span>，点击可触发特殊效果：<br>
+                • 关卡4（火山地狱）：第3波Boss死亡后点击右下传送门 🌀<br>
+                • 深海秘境：击败第3波Boss后点击右下传送门<br>
+                • 果园迷阵：点击右上角苹果树 🍎
+            </p>
+            <div style="margin-top:8px;padding:6px 10px;background:rgba(255,87,34,0.1);border-radius:6px;font-size:11px;color:#aaa;">
+                💡 提示：通关后在地图边角寻找发光的机关图标并点击
+            </div>
+        </div>`;
+
+        document.getElementById('unlockGuideContent').innerHTML = html;
+    }
+
+    function closeUnlockGuide() {
+        let guide = document.getElementById('unlockGuide');
+        guide.style.display = 'none';
+        guide.classList.add('hidden');
+        document.getElementById('startScreen').classList.remove('hidden');
+        renderLevelSelect();
+    }
+
+    function closeUnlockPopup() {
+        let popup = document.getElementById('newUnlockPopup');
+        popup.style.display = 'none';
+        popup.classList.add('hidden');
     }
 
     // ======== 怪物窝系统 ========
     function openNest() {
         document.getElementById('startScreen').classList.add('hidden');
-        document.getElementById('monsterNest').classList.remove('hidden');
+        let nest = document.getElementById('monsterNest');
+        nest.style.display = 'flex';
+        nest.classList.remove('hidden');
         renderNest();
     }
 
     function closeNest() {
-        document.getElementById('monsterNest').classList.add('hidden');
+        let nest = document.getElementById('monsterNest');
+        nest.style.display = 'none';
+        nest.classList.add('hidden');
         document.getElementById('startScreen').classList.remove('hidden');
         renderLevelSelect();
     }
 
     function renderNest() {
-        let html = `<div style="display:flex;justify-content:space-between;margin-bottom:10px;color:#aaa;font-size:13px;">
-            <span>🥛 牛奶 x${game.feedItems.milk}</span>
-            <span>🍪 饼干 x${game.feedItems.cookie}</span>
-            <span>🐾 已孵化 ${game.hatchedCount}</span>
+        let totalEggs = game.eggs.length + game.hatchedCount;
+        let html = `
+        <div style="display:flex;justify-content:space-around;margin-bottom:12px;background:rgba(255,255,255,0.05);border-radius:10px;padding:10px;">
+            <div style="text-align:center;">
+                <div style="font-size:22px;">🥛</div>
+                <div style="color:#fff;font-weight:bold;">${game.feedItems.milk}</div>
+                <div style="color:#aaa;font-size:10px;">牛奶</div>
+            </div>
+            <div style="text-align:center;">
+                <div style="font-size:22px;">🍪</div>
+                <div style="color:#fff;font-weight:bold;">${game.feedItems.cookie}</div>
+                <div style="color:#aaa;font-size:10px;">饼干</div>
+            </div>
+            <div style="text-align:center;">
+                <div style="font-size:22px;">🐾</div>
+                <div style="color:#e040fb;font-weight:bold;">${game.hatchedCount}</div>
+                <div style="color:#aaa;font-size:10px;">已孵化</div>
+            </div>
+            <div style="text-align:center;">
+                <div style="font-size:22px;">🥚</div>
+                <div style="color:#ffd700;font-weight:bold;">${totalEggs}/10</div>
+                <div style="color:#aaa;font-size:10px;">总收集</div>
+            </div>
+        </div>
+        <!-- 解锁进度提示 -->
+        <div style="background:rgba(224,64,251,0.08);border:1px solid rgba(224,64,251,0.3);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:#ccc;">
+            🔑 孵化 <b style="color:#e040fb;">1只</b> → 解锁果园迷阵 &nbsp;|&nbsp; 
+            收集 <b style="color:#ffd700;">10蛋</b> → 解锁挑战竞技场
+            <div style="margin-top:4px;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;">
+                <div style="height:4px;background:linear-gradient(90deg,#e040fb,#ffd700);border-radius:2px;width:${Math.min(100,totalEggs/10*100)}%;"></div>
+            </div>
+            <div style="color:#888;margin-top:2px;">进度：${totalEggs}/10 蛋</div>
         </div>`;
 
-        if (game.eggs.length === 0) {
-            html += `<div style="text-align:center;color:#666;padding:20px;">还没有怪物蛋<br><span style="font-size:12px;">通关关卡可获得蛋</span></div>`;
+        if (game.eggs.length === 0 && game.hatchedCount === 0) {
+            html += `<div style="text-align:center;color:#666;padding:30px;border:2px dashed rgba(255,255,255,0.1);border-radius:10px;">
+                <div style="font-size:40px;margin-bottom:8px;">🥚</div>
+                <div style="color:#aaa;">还没有怪物蛋</div>
+                <div style="font-size:11px;margin-top:4px;color:#666;">通关关卡可随机获得怪物蛋<br>完美通关（金西瓜+道具全清）额外+1蛋</div>
+            </div>`;
         } else {
             game.eggs.forEach((egg, i) => {
                 let et = EGG_TYPES[egg.typeIdx];
-                let stateText = egg.state === 'egg' ? '🥚 等待孵化' : egg.state === 'hatching' ? '🐣 正在成长' : `${et.icon} 已长大`;
-                html += `<div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:10px;margin-bottom:8px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <span style="font-size:20px;">${egg.state === 'hatched' ? et.icon : '🥚'}</span>
-                        <div style="flex:1;margin:0 10px;">
-                            <div style="color:#fff;font-size:13px;">${et.name}</div>
-                            <div style="color:#aaa;font-size:11px;">${stateText}</div>
+                let stateEmoji = egg.state === 'egg' ? '🥚' : egg.state === 'hatching' ? '🐣' : et.icon;
+                let stateText = egg.state === 'egg' ? '等待孵化' : egg.state === 'hatching' ? '正在成长' : '已长大！';
+                let stateColor = egg.state === 'egg' ? '#aaa' : egg.state === 'hatching' ? '#4fc3f7' : '#ffd700';
+                let progressPct = egg.state === 'egg' ?
+                    Math.min(100, egg.progress / EGG_TYPES[egg.typeIdx].hatchTime * 100) :
+                    egg.state === 'hatching' ? Math.min(100, egg.feedProgress / egg.feedNeed * 100) : 100;
+
+                html += `<div style="background:rgba(255,255,255,0.06);border:1px solid ${egg.state==='hatched' ? '#ffd700' : 'rgba(255,255,255,0.1)'};border-radius:12px;padding:12px;margin-bottom:8px;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <div style="font-size:28px;filter:${egg.state==='hatching'?'drop-shadow(0 0 6px #4fc3f7)':''};">${stateEmoji}</div>
+                        <div style="flex:1;">
+                            <div style="color:#fff;font-size:13px;font-weight:bold;">${et.name}</div>
+                            <div style="color:${stateColor};font-size:11px;">${stateText}</div>
+                            ${egg.state !== 'hatched' ? `
+                            <div style="margin-top:5px;height:5px;background:rgba(255,255,255,0.1);border-radius:3px;">
+                                <div style="height:5px;background:${et.color};border-radius:3px;width:${progressPct}%;transition:width 0.3s;"></div>
+                            </div>
+                            <div style="color:#666;font-size:10px;margin-top:2px;">${progressPct.toFixed(0)}%</div>` : ''}
                         </div>
                         ${egg.state === 'egg' ?
-                            `<button onclick="feedEgg(${i},'milk')" style="font-size:11px;padding:4px 8px;background:rgba(255,255,255,0.1);border:1px solid #aaa;border-radius:5px;color:#fff;cursor:pointer;" ${game.feedItems.milk <= 0 ? 'disabled' : ''}>🥛 喂奶</button>` :
+                            `<button onclick="feedEgg(${i},'milk')"
+                                style="padding:6px 10px;background:${game.feedItems.milk>0?'linear-gradient(135deg,#29b6f6,#0288d1)':'rgba(255,255,255,0.1)'};border:none;border-radius:7px;color:#fff;cursor:${game.feedItems.milk>0?'pointer':'not-allowed'};font-size:12px;"
+                                ${game.feedItems.milk <= 0 ? 'disabled' : ''}>🥛 喂牛奶<br><span style="font-size:10px;color:rgba(255,255,255,0.7);">(${game.feedItems.milk}瓶)</span></button>` :
                             egg.state === 'hatching' ?
-                            `<button onclick="feedEgg(${i},'cookie')" style="font-size:11px;padding:4px 8px;background:rgba(255,255,255,0.1);border:1px solid #aaa;border-radius:5px;color:#fff;cursor:pointer;" ${game.feedItems.cookie <= 0 ? 'disabled' : ''}>🍪 喂饼干</button>` :
-                            `<span style="color:#ffd700;font-size:12px;">🎉 完成</span>`
+                            `<button onclick="feedEgg(${i},'cookie')"
+                                style="padding:6px 10px;background:${game.feedItems.cookie>0?'linear-gradient(135deg,#ff9800,#f57c00)':'rgba(255,255,255,0.1)'};border:none;border-radius:7px;color:#fff;cursor:${game.feedItems.cookie>0?'pointer':'not-allowed'};font-size:12px;"
+                                ${game.feedItems.cookie <= 0 ? 'disabled' : ''}>🍪 喂饼干<br><span style="font-size:10px;color:rgba(255,255,255,0.7);">(${game.feedItems.cookie}块)</span></button>` :
+                            `<div style="text-align:center;color:#ffd700;font-size:13px;font-weight:bold;">🎉 长大了！</div>`
                         }
                     </div>
-                    ${egg.state !== 'hatched' ? `
-                    <div style="height:6px;background:rgba(255,255,255,0.1);border-radius:3px;margin-top:6px;">
-                        <div style="height:6px;background:${et.color};border-radius:3px;width:${Math.min(100, egg.state === 'egg' ? egg.progress * 10 : egg.feedProgress / egg.feedNeed * 100)}%;"></div>
-                    </div>` : ''}
                 </div>`;
             });
         }
@@ -1684,6 +1985,47 @@
             }
         }
 
+        // Draw secret map trigger (机关)
+        let curLevel = LEVELS[game.currentLevel];
+        if (curLevel && curLevel.mapTrigger) {
+            let mt = curLevel.mapTrigger;
+            let tx = mt.x * TILE, ty = mt.y * TILE;
+            let pulse = Math.sin(Date.now() * 0.004) * 0.4 + 0.6;
+            if (game.secretPortalActive) {
+                // 机关激活 - 发光闪烁
+                ctx.save();
+                ctx.globalAlpha = pulse;
+                ctx.fillStyle = 'rgba(224,64,251,0.3)';
+                ctx.beginPath();
+                ctx.arc(tx + TILE/2, ty + TILE/2, TILE * 0.8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#e040fb';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+                ctx.font = '22px serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(mt.icon || '🌀', tx + TILE/2, ty + TILE/2);
+                // 提示文字
+                ctx.font = 'bold 11px Microsoft YaHei';
+                ctx.fillStyle = '#e040fb';
+                ctx.globalAlpha = pulse;
+                ctx.fillText('点击!', tx + TILE/2, ty + TILE + 6);
+                ctx.globalAlpha = 1;
+                ctx.restore();
+            } else {
+                // 机关未激活 - 淡显
+                ctx.save();
+                ctx.globalAlpha = 0.25;
+                ctx.font = '16px serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(mt.icon || '🌀', tx + TILE/2, ty + TILE/2);
+                ctx.restore();
+            }
+        }
+
         // Draw towers
         for (let t of game.towers) {
             let type = TOWER_TYPES[t.type];
@@ -1868,6 +2210,16 @@
 
         if (gx < 0 || gx >= COLS || gy < 0 || gy >= ROWS) return;
 
+        // 检查是否点击了激活的地图机关
+        let curLevel = LEVELS[game.currentLevel];
+        if (curLevel && curLevel.mapTrigger && game.secretPortalActive) {
+            let mt = curLevel.mapTrigger;
+            if (Math.abs(gx - mt.x) <= 1 && Math.abs(gy - mt.y) <= 1) {
+                triggerSecretPortal();
+                return;
+            }
+        }
+
         // Check if clicked on a tower
         let clickedTower = null;
         for (let t of game.towers) {
@@ -1889,6 +2241,32 @@
         } else {
             game.selectedTower = null;
         }
+        updateUI();
+    }
+
+    // 触发地图机关
+    function triggerSecretPortal() {
+        let level = LEVELS[game.currentLevel];
+        game.secretPortalActive = false;
+        addParticles(level.mapTrigger.x * TILE + TILE/2, level.mapTrigger.y * TILE + TILE/2, '#e040fb', 20);
+        addFloatingText('✨ 机关触发！', level.mapTrigger.x * TILE + TILE/2, level.mapTrigger.y * TILE, '#e040fb');
+
+        // 机关触发获得额外奖励
+        game.gold += 100;
+        let eggType = Math.floor(Math.random() * EGG_TYPES.length);
+        game.eggs.push({ typeIdx: eggType, state: 'egg', progress: 0, feedProgress: 0 });
+        game.feedItems.milk = (game.feedItems.milk || 0) + 3;
+        saveSaveData();
+        checkHiddenUnlocks();
+
+        setTimeout(() => {
+            document.getElementById('newUnlockText').innerHTML = `
+                <div style="color:#ffd700;font-size:15px;margin-bottom:6px;">🌀 隐藏机关触发！</div>
+                <div style="color:#ccc;">获得额外奖励：+100💰、🥚×1、🥛×3</div>
+                <div style="color:#888;font-size:11px;margin-top:6px;">机关触发还可能帮你达成解锁条件！</div>`;
+            document.getElementById('newUnlockPopup').style.display = 'flex';
+            document.getElementById('newUnlockPopup').classList.remove('hidden');
+        }, 500);
         updateUI();
     }
 
