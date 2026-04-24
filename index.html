@@ -198,6 +198,25 @@
             touch-action: manipulation;
         }
         .speed-btn:hover { background: rgba(255,215,0,0.2); border-color: #ffd700; }
+        .speed-btn.paused-active {
+            background: rgba(100,255,100,0.15);
+            border-color: #4caf50;
+            color: #a5d6a7;
+            box-shadow: 0 0 8px rgba(76,175,80,0.4);
+        }
+        /* 暂停时侧边栏顶部提示条 */
+        #pauseHint {
+            display: none;
+            background: linear-gradient(90deg, rgba(76,175,80,0.2), rgba(100,200,100,0.1));
+            border: 1px solid rgba(76,175,80,0.4);
+            border-radius: 6px;
+            padding: 5px 8px;
+            font-size: 11px;
+            color: #a5d6a7;
+            text-align: center;
+            line-height: 1.4;
+        }
+        #pauseHint.visible { display: block; }
         #towerDetail {
             padding: 8px;
             background: rgba(255,255,255,0.05);
@@ -392,6 +411,7 @@
                     <span class="info-value" id="obstacleDisplay">0/0</span>
                 </div>
             </div>
+            <div id="pauseHint">⏸ 已暂停<br>🔨 可以放置炮塔！</div>
             <div class="panel-title" style="font-size:13px;margin-top:5px;">🔨 炮塔商店</div>
             <div id="towerShop"></div>
             <div id="towerDetail" class="hidden">
@@ -415,6 +435,25 @@
     </div>
 
     <script>
+    // roundRect polyfill for older browsers
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+        CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+            if (typeof r === 'number') r = [r, r, r, r];
+            let [tl, tr, br, bl] = Array.isArray(r) ? r.concat([r[0]||0,r[0]||0,r[0]||0]).slice(0,4) : [0,0,0,0];
+            this.moveTo(x + tl, y);
+            this.lineTo(x + w - tr, y);
+            this.quadraticCurveTo(x + w, y, x + w, y + tr);
+            this.lineTo(x + w, y + h - br);
+            this.quadraticCurveTo(x + w, y + h, x + w - br, y + h);
+            this.lineTo(x + bl, y + h);
+            this.quadraticCurveTo(x, y + h, x, y + h - bl);
+            this.lineTo(x, y + tl);
+            this.quadraticCurveTo(x, y, x + tl, y);
+            this.closePath();
+            return this;
+        };
+    }
+
     // ============ 画布自适应缩放 ============
     function resizeCanvas() {
         let isMobile = window.innerWidth <= 1024;
@@ -780,6 +819,9 @@
         game.secretPortalActive = false;
         game.bossKillCount = 0;
         document.getElementById('pauseBtn').textContent = '⏸ 暂停';
+        document.getElementById('pauseBtn').classList.remove('paused-active');
+        let pauseHint = document.getElementById('pauseHint');
+        if (pauseHint) pauseHint.classList.remove('visible');
 
         // 初始化障碍物
         game.obstacles = [];
@@ -1072,19 +1114,16 @@
     function togglePause() {
         if (!game.running) return;
         game.paused = !game.paused;
-        document.getElementById('pauseBtn').textContent = game.paused ? '▶ 继续' : '⏸ 暂停';
-        // 暂停时在画布上显示暂停文字
+        let pauseBtn = document.getElementById('pauseBtn');
+        let pauseHint = document.getElementById('pauseHint');
         if (game.paused) {
-            ctx.fillStyle = 'rgba(0,0,0,0.5)';
-            ctx.fillRect(0, 0, 800, 600);
-            ctx.fillStyle = '#ffd700';
-            ctx.font = 'bold 48px Microsoft YaHei';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('⏸ 游戏暂停', 400, 280);
-            ctx.font = '20px Microsoft YaHei';
-            ctx.fillStyle = '#aaa';
-            ctx.fillText('点击继续按钮恢复游戏', 400, 330);
+            pauseBtn.textContent = '▶ 继续';
+            pauseBtn.classList.add('paused-active');
+            if (pauseHint) pauseHint.classList.add('visible');
+        } else {
+            pauseBtn.textContent = '⏸ 暂停';
+            pauseBtn.classList.remove('paused-active');
+            if (pauseHint) pauseHint.classList.remove('visible');
         }
     }
 
@@ -1791,14 +1830,23 @@
         ctx.save();
         ctx.translate(cx, cy);
 
-        // Draw watermelon safe zone background
-        ctx.fillStyle = 'rgba(255,235,59,0.08)';
+        // Draw watermelon safe zone background - pulsing glow
+        let glowPulse = Math.sin(game.carrotAnim * 1.5) * 0.3 + 0.7;
+        let gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 40);
+        gradient.addColorStop(0, `rgba(100,220,100,${0.15 * glowPulse})`);
+        gradient.addColorStop(0.6, `rgba(50,180,50,${0.08 * glowPulse})`);
+        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.arc(cx, cy, 28, 0, Math.PI * 2);
+        ctx.arc(0, 0, 40, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = 'rgba(255,235,59,0.25)';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([4, 4]);
+
+        // Safe zone dashed ring
+        ctx.strokeStyle = `rgba(100,220,100,${0.3 * glowPulse})`;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.arc(0, 0, 38, 0, Math.PI * 2);
         ctx.stroke();
         ctx.setLineDash([]);
 
@@ -1818,92 +1866,169 @@
             }
         }
 
-        // Watermelon body (circle)
-        ctx.fillStyle = '#2e7d32';
+        // Watermelon body - outer green skin with gradient
+        let wGrad = ctx.createRadialGradient(-4, -5, 2, 0, 0, 22);
+        wGrad.addColorStop(0, '#5cb85c');
+        wGrad.addColorStop(0.5, '#2e7d32');
+        wGrad.addColorStop(1, '#1b5e20');
+        ctx.fillStyle = wGrad;
         ctx.beginPath();
-        ctx.arc(0, 0, 18, 0, Math.PI * 2);
+        ctx.arc(0, 0, 22, 0, Math.PI * 2);
         ctx.fill();
 
-        // Watermelon stripes
+        // Dark green stripes
         ctx.strokeStyle = '#1b5e20';
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = 3;
+        ctx.globalAlpha = 0.6;
         for (let i = -2; i <= 2; i++) {
             ctx.beginPath();
-            ctx.arc(i * 7, 0, 18, -0.6, 0.6);
+            ctx.arc(i * 9, 0, 22, -0.55, 0.55);
             ctx.stroke();
         }
+        ctx.globalAlpha = 1;
 
-        // Watermelon highlight
-        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        // Inner red flesh (semi-circle bottom half peek)
+        ctx.save();
         ctx.beginPath();
-        ctx.ellipse(-5, -6, 8, 5, -0.5, 0, Math.PI * 2);
+        ctx.arc(0, 0, 22, 0, Math.PI * 2);
+        ctx.clip();
+        let rGrad = ctx.createRadialGradient(0, 4, 0, 0, 4, 18);
+        rGrad.addColorStop(0, '#ff6b6b');
+        rGrad.addColorStop(0.7, '#e53935');
+        rGrad.addColorStop(1, '#c62828');
+        ctx.fillStyle = rGrad;
+        ctx.beginPath();
+        ctx.ellipse(0, 6, 17, 14, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Cute face
-        // Eyes
-        ctx.fillStyle = '#333';
-        ctx.beginPath(); ctx.arc(-5, -3, 2.5, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(5, -3, 2.5, 0, Math.PI * 2); ctx.fill();
+        // Seeds on red flesh
+        ctx.fillStyle = '#1a1a1a';
+        const seedPositions = [[-6, 5], [6, 5], [0, 10], [-10, 9], [10, 9], [-3, 14], [3, 14]];
+        for (let [sx, sy] of seedPositions) {
+            ctx.save();
+            ctx.translate(sx, sy);
+            ctx.rotate(Math.atan2(sy, sx) + Math.PI/2);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 1.5, 3, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+        ctx.restore();
+
+        // Watermelon highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.22)';
+        ctx.beginPath();
+        ctx.ellipse(-6, -8, 9, 5.5, -0.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Small leaf/stem on top
+        ctx.save();
+        ctx.translate(0, -21);
+        // stem
+        ctx.strokeStyle = '#33691e';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, 0); ctx.lineTo(0, -6);
+        ctx.stroke();
+        // leaf
+        ctx.fillStyle = '#558b2f';
+        ctx.beginPath();
+        ctx.ellipse(4, -4, 6, 3, 0.8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#689f38';
+        ctx.beginPath();
+        ctx.ellipse(-4, -5, 5, 2.5, -0.8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Cute face - on top of green skin
+        // Eyes (bigger, cuter)
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.ellipse(-6, -5, 4, 4.5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(6, -5, 4, 4.5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#222';
+        ctx.beginPath(); ctx.arc(-5.5, -5, 2.8, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(6.5, -5, 2.8, 0, Math.PI * 2); ctx.fill();
         // Eye highlights
         ctx.fillStyle = '#fff';
-        ctx.beginPath(); ctx.arc(-4, -4, 1, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(6, -4, 1, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-4.5, -6.5, 1.2, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(7.5, -6.5, 1.2, 0, Math.PI * 2); ctx.fill();
+        // Star sparkle in eye
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.beginPath(); ctx.arc(-4, -4, 0.7, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(8, -4, 0.7, 0, Math.PI * 2); ctx.fill();
         // Blush
-        ctx.fillStyle = 'rgba(255,100,100,0.4)';
-        ctx.beginPath(); ctx.ellipse(-9, 3, 4, 2.5, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(9, 3, 4, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(255,120,120,0.45)';
+        ctx.beginPath(); ctx.ellipse(-11, 0, 5, 3, 0.2, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(11, 0, 5, 3, -0.2, 0, Math.PI * 2); ctx.fill();
         // Smile
-        ctx.strokeStyle = '#333';
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = '#222';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.arc(0, 0, 5, 0.2, Math.PI - 0.2);
+        ctx.arc(0, -2, 7, 0.25, Math.PI - 0.25);
         ctx.stroke();
 
         // Eating damage indicator - bite marks
         if (game.carrotHp < game.maxCarrotHp) {
             let damagePct = 1 - (game.carrotHp / game.maxCarrotHp);
             ctx.fillStyle = '#ff5252';
-            ctx.globalAlpha = damagePct * 0.8;
-            let biteSize = 5 + damagePct * 10;
+            ctx.globalAlpha = damagePct * 0.9;
+            let biteSize = 6 + damagePct * 11;
             // Multiple bite marks
             ctx.beginPath();
-            ctx.arc(12, 6, biteSize, 0, Math.PI * 2);
+            ctx.arc(14, 7, biteSize, 0, Math.PI * 2);
             ctx.fill();
             if (damagePct > 0.3) {
                 ctx.beginPath();
-                ctx.arc(-10, 8, biteSize * 0.6, 0, Math.PI * 2);
+                ctx.arc(-12, 9, biteSize * 0.65, 0, Math.PI * 2);
                 ctx.fill();
             }
             if (damagePct > 0.6) {
                 ctx.beginPath();
-                ctx.arc(5, -14, biteSize * 0.5, 0, Math.PI * 2);
+                ctx.arc(6, -16, biteSize * 0.55, 0, Math.PI * 2);
                 ctx.fill();
             }
             // Red flesh exposed
             ctx.fillStyle = '#e53935';
             ctx.beginPath();
-            ctx.arc(12, 6, biteSize * 0.5, 0, Math.PI * 2);
+            ctx.arc(14, 7, biteSize * 0.5, 0, Math.PI * 2);
             ctx.fill();
             ctx.globalAlpha = 1;
 
-            // Sad face when hurt
-            if (damagePct > 0.3) {
-                ctx.strokeStyle = '#333';
-                ctx.lineWidth = 1.5;
-                // Change smile to frown
+            // Sad face when hurt - cover smile with frown
+            if (damagePct > 0.25) {
+                // Frown
+                ctx.strokeStyle = '#222';
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
                 ctx.beginPath();
-                ctx.arc(0, 8, 5, Math.PI + 0.2, -0.2);
+                ctx.arc(0, 8, 7, Math.PI + 0.25, -0.25);
                 ctx.stroke();
-                // Tears
-                ctx.fillStyle = '#42a5f5';
-                ctx.globalAlpha = damagePct;
+                // Tear drops
+                ctx.fillStyle = '#64b5f6';
+                ctx.globalAlpha = Math.min(1, damagePct * 1.5);
                 ctx.beginPath();
-                ctx.ellipse(-7, 1, 1.5, 3, 0.2, 0, Math.PI * 2);
+                ctx.ellipse(-8, 2, 2, 4, 0.15, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.ellipse(7, 1, 1.5, 3, -0.2, 0, Math.PI * 2);
+                ctx.ellipse(8, 2, 2, 4, -0.15, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.globalAlpha = 1;
+                // X eyes when very hurt
+                if (damagePct > 0.65) {
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2.5;
+                    ctx.lineCap = 'round';
+                    [[-7,-7],[-4,-3]].forEach(([x1,y1]) => {
+                        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x1+3, y1+4); ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(x1+3,y1); ctx.lineTo(x1, y1+4); ctx.stroke();
+                    });
+                    [[5,-7],[8,-3]].forEach(([x1,y1]) => {
+                        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x1+3, y1+4); ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(x1+3,y1); ctx.lineTo(x1, y1+4); ctx.stroke();
+                    });
+                }
             }
         }
 
@@ -1948,12 +2073,20 @@
 
         ctx.restore();
 
-        // HP bar for carrot
+        // HP bar for watermelon (wider, better looking)
         let hpPct = game.carrotHp / game.maxCarrotHp;
-        ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        ctx.fillRect(cx - 20, cy - 30, 40, 5);
-        ctx.fillStyle = hpPct > 0.5 ? '#4caf50' : hpPct > 0.25 ? '#ff9800' : '#f44336';
-        ctx.fillRect(cx - 20, cy - 30, 40 * hpPct, 5);
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.beginPath();
+        ctx.roundRect(cx - 24, cy - 38, 48, 7, 3);
+        ctx.fill();
+        let hpColor = hpPct > 0.5 ? '#4caf50' : hpPct > 0.25 ? '#ff9800' : '#f44336';
+        let hpGrad = ctx.createLinearGradient(cx - 24, 0, cx + 24, 0);
+        hpGrad.addColorStop(0, hpColor);
+        hpGrad.addColorStop(1, hpColor + 'bb');
+        ctx.fillStyle = hpGrad;
+        ctx.beginPath();
+        ctx.roundRect(cx - 24, cy - 38, 48 * hpPct, 7, 3);
+        ctx.fill();
 
         // Draw obstacles
         for (let ob of game.obstacles) {
@@ -2177,7 +2310,7 @@
         let rect = canvas.getBoundingClientRect();
         let mx = (e.clientX - rect.left) * (800 / rect.width);
         let my = (e.clientY - rect.top) * (600 / rect.height);
-        handleCanvasTap(mx, my);
+        handleCanvasTap(mx, my, e);
     });
 
     // 触摸事件
@@ -2201,14 +2334,36 @@
         let rect = canvas.getBoundingClientRect();
         let mx = (mouseX - rect.left) * (800 / rect.width);
         let my = (mouseY - rect.top) * (600 / rect.height);
-        handleCanvasTap(mx, my);
+        handleCanvasTap(mx, my, e);
     }, { passive: false });
 
-    function handleCanvasTap(mx, my) {
+    function handleCanvasTap(mx, my, e) {
         let gx = Math.floor(mx / TILE);
         let gy = Math.floor(my / TILE);
 
         if (gx < 0 || gx >= COLS || gy < 0 || gy >= ROWS) return;
+
+        // 暂停时：只允许放塔/选塔/清障碍，不允许触发机关
+        if (game.paused) {
+            // Check if clicked on a tower
+            let clickedTower = null;
+            for (let t of game.towers) {
+                if (t.gx === gx && t.gy === gy) { clickedTower = t; break; }
+            }
+            if (clickedTower) {
+                game.selectedTower = game.selectedTower === clickedTower ? null : clickedTower;
+                game.selectedType = null;
+                document.querySelectorAll('.tower-btn').forEach(btn => btn.classList.remove('selected'));
+            } else if (game.grid[gx][gy] === 3) {
+                attackObstacle(gx, gy);
+            } else if (game.selectedType && game.grid[gx][gy] === 0) {
+                placeTower(gx, gy);
+            } else {
+                game.selectedTower = null;
+            }
+            updateUI();
+            return;
+        }
 
         // 检查是否点击了激活的地图机关
         let curLevel = LEVELS[game.currentLevel];
@@ -2294,22 +2449,69 @@
     function gameLoop() {
         if (game.running && !game.paused) {
             update();
+        } else if (game.running && game.paused) {
+            // 暂停时仍推进动画帧（西瓜浮动、暂停遮罩脉冲）
+            game.carrotAnim += 0.02;
         }
         if (game.currentLevel !== undefined && LEVELS[game.currentLevel]) {
             draw();
-            // 暂停遮罩
-            if (game.paused && game.running) {
-                ctx.fillStyle = 'rgba(0,0,0,0.55)';
-                ctx.fillRect(0, 0, 800, 600);
-                ctx.fillStyle = '#ffd700';
-                ctx.font = 'bold 48px Microsoft YaHei';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('⏸ 游戏暂停', 400, 280);
-                ctx.font = '18px Microsoft YaHei';
-                ctx.fillStyle = '#aaa';
-                ctx.fillText('点击「继续」恢复游戏', 400, 335);
-            }
+        // 暂停遮罩 - 美化版
+        if (game.paused && game.running) {
+            // 半透明渐变遮罩
+            let pauseGrad = ctx.createLinearGradient(0, 0, 0, 600);
+            pauseGrad.addColorStop(0, 'rgba(0,0,0,0.6)');
+            pauseGrad.addColorStop(0.5, 'rgba(10,20,50,0.55)');
+            pauseGrad.addColorStop(1, 'rgba(0,0,0,0.6)');
+            ctx.fillStyle = pauseGrad;
+            ctx.fillRect(0, 0, 800, 600);
+
+            // 中央圆角卡片背景
+            ctx.fillStyle = 'rgba(10,15,40,0.88)';
+            ctx.strokeStyle = 'rgba(255,215,0,0.5)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(250, 220, 300, 160, 18);
+            ctx.fill();
+            ctx.stroke();
+
+            // 金色光晕
+            let pauseGlow = ctx.createRadialGradient(400, 290, 0, 400, 290, 120);
+            pauseGlow.addColorStop(0, 'rgba(255,215,0,0.12)');
+            pauseGlow.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = pauseGlow;
+            ctx.fillRect(250, 200, 300, 200);
+
+            // 暂停图标大字
+            ctx.font = 'bold 36px Microsoft YaHei';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#ffd700';
+            ctx.shadowColor = 'rgba(255,215,0,0.6)';
+            ctx.shadowBlur = 15;
+            ctx.fillText('⏸ 游戏暂停', 400, 263);
+            ctx.shadowBlur = 0;
+
+            // 分割线
+            ctx.strokeStyle = 'rgba(255,215,0,0.25)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(280, 286); ctx.lineTo(520, 286);
+            ctx.stroke();
+
+            // 提示文字
+            ctx.font = '15px Microsoft YaHei';
+            ctx.fillStyle = '#a0e8a0';
+            ctx.fillText('✅ 现在可以布置炮塔！', 400, 308);
+
+            ctx.font = '13px Microsoft YaHei';
+            ctx.fillStyle = '#aaa';
+            ctx.fillText('点击「继续」恢复战斗', 400, 333);
+
+            // 底部金币提示
+            ctx.font = 'bold 14px Microsoft YaHei';
+            ctx.fillStyle = '#ffd700';
+            ctx.fillText(`💰 当前金币：${game.gold}`, 400, 357);
+        }
         }
         requestAnimationFrame(gameLoop);
     }
