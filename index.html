@@ -6,6 +6,11 @@
     <title>保卫西瓜 - 塔防游戏</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html {
+            /* 暴露安全区域给 JS 使用 */
+            --sat: env(safe-area-inset-top, 0px);
+            --sab: env(safe-area-inset-bottom, 0px);
+        }
         html, body {
             width: 100%;
             height: 100%;
@@ -458,15 +463,16 @@
             body {
                 align-items: flex-start;
                 justify-content: flex-start;
-                /* safe area 已在 body padding 处理 */
                 padding-top: env(safe-area-inset-top);
-                padding-bottom: env(safe-area-inset-bottom);
+                padding-bottom: 0;
+                padding-left: 0;
+                padding-right: 0;
             }
             #gameContainer {
                 flex-direction: column;
                 width: 100vw;
-                height: 100vh;
-                height: 100dvh;
+                /* 用 calc 精确计算：总高度减去顶部和底部安全区域 */
+                height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
             }
             canvas {
                 border-radius: 0;
@@ -479,11 +485,10 @@
                 border-top: none;
                 flex-direction: column;
                 padding: 8px 10px;
+                padding-bottom: calc(8px + env(safe-area-inset-bottom));
                 gap: 6px;
                 max-height: 45vh;
                 overflow-y: auto;
-                /* safe area for sidebar bottom */
-                padding-bottom: max(8px, env(safe-area-inset-bottom));
             }
             .panel-title { font-size: 13px; padding-bottom: 4px; }
             .info-row { font-size: 12px; padding: 2px 0; }
@@ -516,7 +521,14 @@
                 width: 100%;
                 height: 100%;
                 border-radius: 0;
-                padding: 20px;
+                padding: 15px 16px;
+                padding-bottom: calc(15px + env(safe-area-inset-bottom));
+                overflow-y: auto;
+                justify-content: flex-start;
+            }
+            #monsterNest, #unlockGuide {
+                padding: 15px 16px;
+                padding-bottom: calc(15px + env(safe-area-inset-bottom));
             }
             #startScreen h1, #winScreen h1 {
                 font-size: 32px;
@@ -712,8 +724,11 @@
             let safeTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sat')) || 0;
             let safeBottom = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sab')) || 0;
             let availW = window.innerWidth;
-            let availH = window.innerHeight - sidebarH - safeTop - safeBottom;
-            let scale = Math.min(availW / 800, availH / 600);
+            let availH = window.innerHeight - safeTop - safeBottom;
+            // canvas 高度 = 可用总高度 - 侧边栏实际高度
+            let canvasAvailH = availH - sidebarH;
+            let scale = Math.min(availW / 800, canvasAvailH / 600);
+            if (scale > 1) scale = 1;
             let w = Math.floor(800 * scale);
             let h = Math.floor(600 * scale);
             canvas.style.width = w + 'px';
