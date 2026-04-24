@@ -293,7 +293,10 @@
             <h1>🍉 保卫西瓜</h1>
             <p class="subtitle">选择关卡开始游戏</p>
             <div class="level-select" id="levelSelect"></div>
-            <p style="color:#666;font-size:12px;margin-top:10px;">点击关卡开始，消灭所有怪物保护西瓜！</p>
+            <div style="margin-top:12px;">
+                <button class="btn" style="background:linear-gradient(135deg,#7c4dff,#e040fb);color:#fff;font-size:13px;" onclick="openNest()">🥚 怪物窝</button>
+            </div>
+            <p style="color:#666;font-size:12px;margin-top:10px;">🏆 获得金萝卜+清除障碍物可解锁隐藏关卡</p>
         </div>
 
         <!-- 游戏结束界面 -->
@@ -308,16 +311,30 @@
         <div id="winScreen" class="hidden">
             <h1>🎉 关卡通过！</h1>
             <p class="subtitle">西瓜安全了！</p>
-            <p style="color:#ffd700;font-size:18px;margin-bottom:20px;" id="winScore"></p>
+            <div id="winRating" style="margin-bottom:10px;"></div>
+            <p style="color:#ffd700;font-size:18px;margin-bottom:10px;" id="winScore"></p>
+            <div id="winRewards" style="margin-bottom:15px;"></div>
             <div style="display:flex;gap:12px;">
                 <button class="btn btn-start" onclick="nextLevel()">下一关</button>
                 <button class="btn" style="background:rgba(255,255,255,0.1);color:#fff;" onclick="showStart()">返回</button>
             </div>
         </div>
 
+        <!-- 怪物窝界面 -->
+        <div id="monsterNest" class="hidden">
+            <h1 style="font-size:36px;">🥚 怪物窝</h1>
+            <p class="subtitle">孵化并喂养你的怪物</p>
+            <div id="nestContent" style="width:90%;max-width:400px;max-height:60vh;overflow-y:auto;"></div>
+            <button class="btn btn-start" style="margin-top:15px;" onclick="closeNest()">返回</button>
+        </div>
+
         <!-- 侧边栏 -->
         <div id="sidebar">
             <div class="panel-title">🍉 保卫西瓜</div>
+            <div style="text-align:center;padding:4px 0;">
+                <span style="color:#ff9800;font-size:13px;font-weight:bold;" id="levelInfoDisplay">第1关 · 绿野仙踪</span>
+                <div id="ratingDisplay" style="margin-top:2px;"></div>
+            </div>
             <div>
                 <div class="info-row">
                     <span class="info-label">💰 金币</span>
@@ -334,6 +351,14 @@
                 <div class="info-row">
                     <span class="info-label">⭐ 得分</span>
                     <span class="info-value" id="scoreDisplay">0</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">🥚 怪物蛋</span>
+                    <span class="info-value" id="eggDisplay">0</span>
+                </div>
+                <div class="info-row" id="obstacleRow" style="display:none;">
+                    <span class="info-label">🧱 障碍物</span>
+                    <span class="info-value" id="obstacleDisplay">0/0</span>
                 </div>
             </div>
             <div class="panel-title" style="font-size:13px;margin-top:5px;">🔨 炮塔商店</div>
@@ -352,6 +377,7 @@
             </div>
             <div style="display:flex;gap:6px;margin-top:auto;">
                 <button class="btn btn-start" style="flex:1;" id="startWaveBtn" onclick="startWave()">▶ 开始</button>
+                <button class="speed-btn" onclick="togglePause()" id="pauseBtn">⏸ 暂停</button>
                 <button class="speed-btn" onclick="toggleSpeed()" id="speedBtn">1x</button>
             </div>
         </div>
@@ -461,7 +487,10 @@
                 { monsters: [{type:'normal',count:8,interval:1200}] },
                 { monsters: [{type:'normal',count:10,interval:1000},{type:'fast',count:3,interval:800}] },
                 { monsters: [{type:'normal',count:8,interval:900},{type:'tank',count:2,interval:2000}] }
-            ]
+            ],
+            obstacles: [{x:5,y:5,type:'box'},{x:9,y:7,type:'box'},{x:13,y:3,type:'box'},{x:6,y:9,type:'box'}],
+            rewards: { eggs: 1, milk: 2, cookie: 1 },
+            hiddenTask: { desc: '只用瓶子塔通关', type: 'towerOnly', towerType: 'bottle' }
         },
         {
             name: '沙漠风暴',
@@ -472,7 +501,9 @@
                 { monsters: [{type:'normal',count:12,interval:900},{type:'fast',count:5,interval:700}] },
                 { monsters: [{type:'tank',count:4,interval:1800},{type:'fast',count:8,interval:600}] },
                 { monsters: [{type:'boss',count:1,interval:1000},{type:'normal',count:15,interval:800}] }
-            ]
+            ],
+            obstacles: [{x:7,y:5,type:'rock'},{x:3,y:8,type:'rock'},{x:11,y:4,type:'rock'},{x:15,y:6,type:'rock'},{x:7,y:11,type:'rock'}],
+            rewards: { eggs: 1, milk: 3, cookie: 2 }
         },
         {
             name: '冰雪奇缘',
@@ -483,7 +514,10 @@
                 { monsters: [{type:'fast',count:12,interval:600},{type:'tank',count:3,interval:1500}] },
                 { monsters: [{type:'tank',count:6,interval:1200},{type:'fast',count:10,interval:500}] },
                 { monsters: [{type:'boss',count:2,interval:3000},{type:'normal',count:20,interval:600}] }
-            ]
+            ],
+            obstacles: [{x:6,y:6,type:'ice'},{x:10,y:8,type:'ice'},{x:14,y:6,type:'ice'},{x:2,y:5,type:'ice'},{x:6,y:12,type:'ice'},{x:14,y:2,type:'ice'}],
+            rewards: { eggs: 2, milk: 3, cookie: 2 },
+            hiddenTask: { desc: '在120秒内通关', type: 'timeLimit', seconds: 120 }
         },
         {
             name: '火山地狱',
@@ -494,7 +528,10 @@
                 { monsters: [{type:'tank',count:8,interval:1000},{type:'normal',count:15,interval:600}] },
                 { monsters: [{type:'boss',count:1,interval:2000},{type:'tank',count:5,interval:1200},{type:'fast',count:10,interval:500}] },
                 { monsters: [{type:'boss',count:3,interval:2500},{type:'tank',count:8,interval:1000},{type:'fast',count:15,interval:400}] }
-            ]
+            ],
+            obstacles: [{x:5,y:9,type:'lava'},{x:9,y:5,type:'lava'},{x:9,y:12,type:'lava'},{x:13,y:8,type:'lava'},{x:5,y:2,type:'lava'},{x:17,y:7,type:'lava'},{x:13,y:1,type:'lava'}],
+            rewards: { eggs: 2, milk: 4, cookie: 3 },
+            secretTrigger: { desc: '在第三波次中击杀Boss后，点击右下角的传送门', icon: '🌀' }
         },
         {
             name: '星空决战',
@@ -505,8 +542,58 @@
                 { monsters: [{type:'boss',count:2,interval:2000},{type:'tank',count:8,interval:900},{type:'normal',count:20,interval:500}] },
                 { monsters: [{type:'boss',count:3,interval:1800},{type:'tank',count:10,interval:700},{type:'fast',count:20,interval:300}] },
                 { monsters: [{type:'boss',count:5,interval:1500},{type:'tank',count:15,interval:600},{type:'fast',count:25,interval:250}] }
-            ]
+            ],
+            obstacles: [{x:7,y:7,type:'star'},{x:11,y:4,type:'star'},{x:3,y:10,type:'star'},{x:15,y:12,type:'star'},{x:7,y:2,type:'star'},{x:11,y:10,type:'star'},{x:16,y:5,type:'star'},{x:2,y:13,type:'star'}],
+            rewards: { eggs: 3, milk: 5, cookie: 4 },
+            hiddenTask: { desc: '放置至少6座炮塔通关', type: 'minTowers', minCount: 6 }
+        },
+        // ===== 隐藏关卡 =====
+        {
+            name: '🍎 果园迷阵',
+            bg: '#1a3a1a', pathColor: '#8d6e63',
+            path: [[-1,3],[2,3],[2,12],[6,12],[6,2],[10,2],[10,11],[14,11],[14,4],[18,4]],
+            startGold: 280, waves: [
+                { monsters: [{type:'fast',count:15,interval:500},{type:'normal',count:10,interval:600}] },
+                { monsters: [{type:'tank',count:5,interval:1500},{type:'fast',count:12,interval:400},{type:'boss',count:1,interval:3000}] },
+                { monsters: [{type:'boss',count:2,interval:2000},{type:'tank',count:8,interval:800},{type:'fast',count:20,interval:300}] }
+            ],
+            obstacles: [{x:4,y:6,type:'apple'},{x:8,y:7,type:'apple'},{x:12,y:6,type:'apple'},{x:4,y:10,type:'apple'},{x:8,y:5,type:'apple'},{x:16,y:8,type:'apple'}],
+            rewards: { eggs: 2, milk: 4, cookie: 3 },
+            hidden: true, unlockReq: 'eggHatch', // 需要孵化1只怪物
+            hiddenTask: { desc: '不吃一颗星通关（保持20颗星）', type: 'maxStars' }
+        },
+        {
+            name: '🌊 深海秘境',
+            bg: '#0a1a3a', pathColor: '#4dd0e1',
+            path: [[-1,7],[3,7],[3,1],[7,1],[7,13],[11,13],[11,3],[15,3],[15,10],[18,10]],
+            startGold: 320, waves: [
+                { monsters: [{type:'tank',count:8,interval:800},{type:'fast',count:15,interval:400}] },
+                { monsters: [{type:'boss',count:2,interval:2000},{type:'tank',count:10,interval:700},{type:'fast',count:20,interval:300}] },
+                { monsters: [{type:'boss',count:4,interval:1500},{type:'tank',count:12,interval:600},{type:'fast',count:25,interval:250}] }
+            ],
+            obstacles: [{x:5,y:4,type:'coral'},{x:9,y:9,type:'coral'},{x:13,y:6,type:'coral'},{x:5,y:11,type:'coral'},{x:1,y:5,type:'coral'},{x:17,y:6,type:'coral'},{x:9,y:2,type:'coral'}],
+            rewards: { eggs: 3, milk: 5, cookie: 4 },
+            hidden: true, unlockReq: 'perfect2' // 需要任意2关金萝卜+障碍全清
         }
+    ];
+
+    // 障碍物类型定义
+    const OBSTACLE_TYPES = {
+        box: { name: '木箱', icon: '📦', hp: 50, cost: 30, color: '#8d6e63' },
+        rock: { name: '石头', icon: '🪨', hp: 80, cost: 50, color: '#78909c' },
+        ice: { name: '冰块', icon: '🧊', hp: 60, cost: 40, color: '#80deea' },
+        lava: { name: '岩浆石', icon: '🔥', hp: 100, cost: 60, color: '#ff5722' },
+        star: { name: '星石', icon: '⭐', hp: 120, cost: 70, color: '#ffd740' },
+        apple: { name: '苹果树', icon: '🍎', hp: 70, cost: 45, color: '#66bb6a' },
+        coral: { name: '珊瑚', icon: '🪸', hp: 90, cost: 55, color: '#e91e63' }
+    };
+
+    // 怪物蛋系统
+    const EGG_TYPES = [
+        { name: '绿芽怪', icon: '🦎', hatchTime: 2, feedNeed: 5, color: '#66bb6a' },
+        { name: '冰晶兽', icon: '🧊', hatchTime: 3, feedNeed: 8, color: '#4fc3f7' },
+        { name: '火焰龙', icon: '🐉', hatchTime: 4, feedNeed: 10, color: '#ff5722' },
+        { name: '暗影猫', icon: '🐈‍⬛', hatchTime: 3, feedNeed: 7, color: '#7e57c2' }
     ];
 
     // ============ 游戏状态 ============
@@ -520,8 +607,51 @@
         unlockedLevels: 1, carrotHp: 20, maxCarrotHp: 20,
         carrotPos: { x: 0, y: 0 }, carrotAnim: 0,
         eatingAnim: false, eatingTimer: 0, eatingMonster: null,
-        particles: [], floatingTexts: []
+        particles: [], floatingTexts: [],
+        // 新系统状态
+        obstacles: [],       // 当前关卡障碍物
+        totalObstacles: 0,   // 障碍物总数
+        clearedObstacles: 0, // 已清除障碍物
+        damageTaken: 0,      // 受伤次数（用于金萝卜评价）
+        levelStartTime: 0,   // 关卡开始时间
+        towerTypesUsed: {},  // 使用的炮塔类型
+        // 怪物窝/蛋系统（全局持久）
+        eggs: [],            // 拥有的蛋 [{type, state:'egg'|'hatching'|'hatched', progress, feedProgress, feedNeed}]
+        feedItems: { milk: 0, cookie: 0 }, // 喂养道具
+        hatchedCount: 0,     // 已孵化数量
+        levelStars: {},      // 关卡评价 {levelIdx: {stars, goldenCarrot, obstaclesCleared}}
+        // 隐藏关卡解锁
+        hiddenUnlocked: {},  // {levelIdx: true}
+        secretPortalActive: false
     };
+
+    // 从 localStorage 加载持久数据
+    function loadSaveData() {
+        try {
+            let data = JSON.parse(localStorage.getItem('watermelon_save'));
+            if (data) {
+                game.unlockedLevels = data.unlockedLevels || 1;
+                game.eggs = data.eggs || [];
+                game.feedItems = data.feedItems || { milk: 0, cookie: 0 };
+                game.hatchedCount = data.hatchedCount || 0;
+                game.levelStars = data.levelStars || {};
+                game.hiddenUnlocked = data.hiddenUnlocked || {};
+            }
+        } catch(e) {}
+    }
+
+    function saveSaveData() {
+        try {
+            localStorage.setItem('watermelon_save', JSON.stringify({
+                unlockedLevels: game.unlockedLevels,
+                eggs: game.eggs,
+                feedItems: game.feedItems,
+                hatchedCount: game.hatchedCount,
+                levelStars: game.levelStars,
+                hiddenUnlocked: game.hiddenUnlocked
+            }));
+        } catch(e) {}
+    }
 
     // ============ 工具函数 ============
     function dist(x1, y1, x2, y2) { return Math.sqrt((x2-x1)**2 + (y2-y1)**2); }
@@ -583,6 +713,29 @@
         game.selectedType = null;
         game.carrotHp = 20;
         game.maxCarrotHp = 20;
+        game.paused = false;
+        game.speed = 1;
+        game.damageTaken = 0;
+        game.levelStartTime = Date.now();
+        game.towerTypesUsed = {};
+        game.secretPortalActive = false;
+        document.getElementById('pauseBtn').textContent = '⏸ 暂停';
+
+        // 初始化障碍物
+        game.obstacles = [];
+        game.totalObstacles = 0;
+        game.clearedObstacles = 0;
+        if (level.obstacles) {
+            level.obstacles.forEach(ob => {
+                game.obstacles.push({
+                    x: ob.x, y: ob.y,
+                    type: ob.type,
+                    hp: OBSTACLE_TYPES[ob.type].hp,
+                    maxHp: OBSTACLE_TYPES[ob.type].hp
+                });
+            });
+            game.totalObstacles = level.obstacles.length;
+        }
 
         game.pathPixels = generatePathPixels(level.path);
         game.pathGrid = generatePathGrid(level.path);
@@ -590,18 +743,41 @@
         for (let x = 0; x < COLS; x++) {
             game.grid[x] = [];
             for (let y = 0; y < ROWS; y++) {
-                game.grid[x][y] = game.pathGrid.has(`${x},${y}`) ? 1 : 0;
+                if (game.pathGrid.has(`${x},${y}`)) {
+                    game.grid[x][y] = 1;
+                } else if (game.obstacles.some(ob => ob.x === x && ob.y === y)) {
+                    game.grid[x][y] = 3; // obstacle
+                } else {
+                    game.grid[x][y] = 0;
+                }
             }
         }
 
         let lastP = level.path[level.path.length - 1];
         game.carrotPos = { x: lastP[0] * TILE + TILE / 2, y: lastP[1] * TILE + TILE / 2 };
         game.running = true;
-        game.speed = 1;
 
         updateUI();
         renderTowerShop();
         document.getElementById('speedBtn').textContent = '1x';
+        document.getElementById('levelInfoDisplay').textContent = `第${levelIdx + 1}关 · ${level.name}`;
+        if (game.totalObstacles > 0) {
+            document.getElementById('obstacleRow').style.display = 'flex';
+        } else {
+            document.getElementById('obstacleRow').style.display = 'none';
+        }
+        // 显示已有评价
+        let stars = game.levelStars[levelIdx];
+        document.getElementById('ratingDisplay').innerHTML = stars ?
+            `${stars.goldenCarrot ? '🏆' : '⭐'} ${stars.stars}星${stars.goldenCarrot ? ' · 金西瓜' : ''}${stars.obstaclesCleared ? ' · 道具全清' : ''}` : '';
+
+        // 检查隐藏任务提示
+        if (level.hiddenTask) {
+            document.getElementById('ratingDisplay').innerHTML += `<br><span style="font-size:10px;color:#aaa;">🎯 ${level.hiddenTask.desc}</span>`;
+        }
+        if (level.secretTrigger) {
+            document.getElementById('ratingDisplay').innerHTML += `<br><span style="font-size:10px;color:#aaa;">🔑 ${level.secretTrigger.desc}</span>`;
+        }
     }
 
     // ============ UI 渲染 ============
@@ -609,9 +785,15 @@
         document.getElementById('goldDisplay').textContent = game.gold;
         document.getElementById('livesDisplay').textContent = game.lives;
         document.getElementById('scoreDisplay').textContent = game.score;
+        document.getElementById('eggDisplay').textContent = game.eggs.length;
         let level = LEVELS[game.currentLevel];
         document.getElementById('waveDisplay').textContent = `${game.currentWave}/${level.waves.length}`;
         document.getElementById('startWaveBtn').textContent = game.waveActive ? '🌊 进行中' : '▶ 开始';
+
+        // 障碍物计数
+        if (game.totalObstacles > 0) {
+            document.getElementById('obstacleDisplay').textContent = `${game.clearedObstacles}/${game.totalObstacles}`;
+        }
 
         // Update tower button states
         document.querySelectorAll('.tower-btn').forEach(btn => {
@@ -654,9 +836,24 @@
     function renderLevelSelect() {
         let html = '';
         for (let i = 0; i < LEVELS.length; i++) {
-            let locked = i >= game.unlockedLevels;
-            html += `<div class="level-btn ${locked ? 'locked' : ''}" onclick="${locked ? '' : 'startLevel(' + i + ')'}">
-                ${locked ? '🔒' : (i + 1)}
+            let level = LEVELS[i];
+            let locked = false;
+            if (level.hidden) {
+                // 隐藏关卡 - 检查是否已解锁
+                if (game.hiddenUnlocked[i]) {
+                    locked = false;
+                } else {
+                    locked = true;
+                }
+            } else {
+                locked = i >= game.unlockedLevels;
+            }
+            let stars = game.levelStars[i];
+            let starStr = stars ? (stars.goldenCarrot ? '🏆' : '⭐') + stars.stars : (locked ? '🔒' : '');
+            let bgStyle = level.hidden && !locked ? '' :
+                (stars && stars.goldenCarrot ? 'border-color:#ffd700;background:rgba(255,215,0,0.2);' : '');
+            html += `<div class="level-btn ${locked ? 'locked' : ''}" style="${bgStyle}" onclick="${locked ? '' : 'startLevel(' + i + ')'}">
+                ${level.hidden && !locked ? '🔒' : (i + 1)}<br><span style="font-size:10px;">${starStr}</span>
             </div>`;
         }
         document.getElementById('levelSelect').innerHTML = html;
@@ -713,6 +910,7 @@
             totalCost: type.cost
         });
         game.grid[gx][gy] = 2; // tower
+        game.towerTypesUsed[game.selectedType] = true;
         updateUI();
     }
 
@@ -742,13 +940,32 @@
     }
 
     function startWave() {
-        if (game.waveActive) return;
+        if (game.waveActive || game.paused) return;
         let level = LEVELS[game.currentLevel];
         if (game.currentWave >= level.waves.length) return;
         game.waveActive = true;
         spawnWave(game.currentWave);
         game.currentWave++;
         updateUI();
+    }
+
+    function togglePause() {
+        if (!game.running) return;
+        game.paused = !game.paused;
+        document.getElementById('pauseBtn').textContent = game.paused ? '▶ 继续' : '⏸ 暂停';
+        // 暂停时在画布上显示暂停文字
+        if (game.paused) {
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(0, 0, 800, 600);
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 48px Microsoft YaHei';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('⏸ 游戏暂停', 400, 280);
+            ctx.font = '20px Microsoft YaHei';
+            ctx.fillStyle = '#aaa';
+            ctx.fillText('点击继续按钮恢复游戏', 400, 330);
+        }
     }
 
     function toggleSpeed() {
@@ -832,9 +1049,7 @@
 
     // ============ 游戏更新 ============
     function update() {
-        if (!game.running || game.waveActive === false && game.monsters.length === 0) {
-            // Still allow rendering
-        }
+        if (!game.running || game.paused) return;
 
         game.carrotAnim += 0.03;
 
@@ -875,6 +1090,7 @@
                         game.eatingMonster = { color: m.color, size: m.size };
                         game.lives--;
                         game.carrotHp--;
+                        game.damageTaken++;  // 记录受伤次数
                         addParticles(game.carrotPos.x, game.carrotPos.y, '#ff5252', 8);
                         addFloatingText('-1 ❤️', game.carrotPos.x, game.carrotPos.y - 20, '#ff5252');
                         if (game.lives <= 0) {
@@ -1009,17 +1225,173 @@
 
     function gameOver() {
         game.running = false;
+        game.paused = false;
         document.getElementById('overScore').textContent = `得分：${game.score}`;
         document.getElementById('gameOverScreen').classList.remove('hidden');
     }
 
     function winGame() {
         game.running = false;
-        document.getElementById('winScore').textContent = `得分：${game.score}`;
-        document.getElementById('winScreen').classList.remove('hidden');
-        if (game.currentLevel + 1 >= game.unlockedLevels) {
-            game.unlockedLevels = Math.min(LEVELS.length, game.currentLevel + 2);
+        game.paused = false;
+        let level = LEVELS[game.currentLevel];
+
+        // 评价计算
+        let goldenCarrot = game.damageTaken === 0;
+        let obstaclesCleared = game.totalObstacles > 0 && game.clearedObstacles >= game.totalObstacles;
+        let stars = 1;
+        if (game.damageTaken <= 3) stars = 2;
+        if (goldenCarrot) stars = 3;
+
+        // 检查隐藏任务
+        let hiddenTaskDone = false;
+        if (level.hiddenTask) {
+            let ht = level.hiddenTask;
+            if (ht.type === 'towerOnly' && Object.keys(game.towerTypesUsed).length === 1 && game.towerTypesUsed[ht.towerType]) hiddenTaskDone = true;
+            if (ht.type === 'timeLimit' && (Date.now() - game.levelStartTime) / 1000 <= ht.seconds) hiddenTaskDone = true;
+            if (ht.type === 'minTowers' && game.towers.length >= ht.minCount) hiddenTaskDone = true;
+            if (ht.type === 'maxStars' && game.damageTaken === 0) hiddenTaskDone = true;
         }
+
+        // 保存星级
+        let prev = game.levelStars[game.currentLevel] || {};
+        game.levelStars[game.currentLevel] = {
+            stars: Math.max(stars, prev.stars || 0),
+            goldenCarrot: goldenCarrot || (prev.goldenCarrot || false),
+            obstaclesCleared: obstaclesCleared || (prev.obstaclesCleared || false)
+        };
+
+        // 解锁下一关
+        if (game.currentLevel + 1 >= game.unlockedLevels) {
+            game.unlockedLevels = Math.min(5, game.currentLevel + 2);
+        }
+
+        // 奖励道具 & 蛋
+        let rewards = level.rewards || {};
+        let eggsGained = 0;
+        if (goldenCarrot && obstaclesCleared) {
+            eggsGained = (rewards.eggs || 0) + 1;
+        } else {
+            eggsGained = rewards.eggs || 0;
+        }
+        for (let i = 0; i < eggsGained; i++) {
+            let eggType = Math.floor(Math.random() * EGG_TYPES.length);
+            game.eggs.push({ typeIdx: eggType, state: 'egg', progress: 0, feedProgress: 0 });
+        }
+        game.feedItems.milk = (game.feedItems.milk || 0) + (rewards.milk || 0);
+        game.feedItems.cookie = (game.feedItems.cookie || 0) + (rewards.cookie || 0);
+
+        // 检查隐藏关解锁条件
+        checkHiddenUnlocks();
+
+        // 保存数据
+        saveSaveData();
+
+        // 构建评价UI
+        let ratingHtml = '';
+        ratingHtml += `<div style="font-size:24px;margin:5px 0;">${'⭐'.repeat(stars)}${'☆'.repeat(3 - stars)}</div>`;
+        if (goldenCarrot) ratingHtml += `<div style="color:#ffd700;font-weight:bold;">🏆 金西瓜！全程零伤害</div>`;
+        if (obstaclesCleared) ratingHtml += `<div style="color:#4caf50;">✅ 道具全清</div>`;
+        if (hiddenTaskDone) ratingHtml += `<div style="color:#e040fb;">🎯 隐藏任务完成！</div>`;
+
+        let rewardHtml = `<div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:10px;font-size:13px;color:#ddd;">
+            <div style="color:#ffd700;font-weight:bold;margin-bottom:6px;">🎁 本关奖励</div>
+            ${eggsGained > 0 ? `<div>🥚 怪物蛋 x${eggsGained}</div>` : ''}
+            ${rewards.milk ? `<div>🥛 牛奶 x${rewards.milk}</div>` : ''}
+            ${rewards.cookie ? `<div>🍪 饼干 x${rewards.cookie}</div>` : ''}
+        </div>`;
+
+        document.getElementById('winScore').textContent = `得分：${game.score}`;
+        document.getElementById('winRating').innerHTML = ratingHtml;
+        document.getElementById('winRewards').innerHTML = rewardHtml;
+        document.getElementById('winScreen').classList.remove('hidden');
+    }
+
+    function checkHiddenUnlocks() {
+        // 关卡6（果园迷阵）- 需要孵化1只怪物
+        if (game.hatchedCount >= 1 && !game.hiddenUnlocked[5]) {
+            game.hiddenUnlocked[5] = true;
+            addFloatingText('🔓 果园迷阵已解锁!', 400, 200, '#e040fb');
+        }
+        // 关卡7（深海秘境）- 需要任意2关金萝卜+障碍全清
+        let perfectCount = Object.values(game.levelStars).filter(s => s.goldenCarrot && s.obstaclesCleared).length;
+        if (perfectCount >= 2 && !game.hiddenUnlocked[6]) {
+            game.hiddenUnlocked[6] = true;
+        }
+    }
+
+    // ======== 怪物窝系统 ========
+    function openNest() {
+        document.getElementById('startScreen').classList.add('hidden');
+        document.getElementById('monsterNest').classList.remove('hidden');
+        renderNest();
+    }
+
+    function closeNest() {
+        document.getElementById('monsterNest').classList.add('hidden');
+        document.getElementById('startScreen').classList.remove('hidden');
+        renderLevelSelect();
+    }
+
+    function renderNest() {
+        let html = `<div style="display:flex;justify-content:space-between;margin-bottom:10px;color:#aaa;font-size:13px;">
+            <span>🥛 牛奶 x${game.feedItems.milk}</span>
+            <span>🍪 饼干 x${game.feedItems.cookie}</span>
+            <span>🐾 已孵化 ${game.hatchedCount}</span>
+        </div>`;
+
+        if (game.eggs.length === 0) {
+            html += `<div style="text-align:center;color:#666;padding:20px;">还没有怪物蛋<br><span style="font-size:12px;">通关关卡可获得蛋</span></div>`;
+        } else {
+            game.eggs.forEach((egg, i) => {
+                let et = EGG_TYPES[egg.typeIdx];
+                let stateText = egg.state === 'egg' ? '🥚 等待孵化' : egg.state === 'hatching' ? '🐣 正在成长' : `${et.icon} 已长大`;
+                html += `<div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:10px;margin-bottom:8px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:20px;">${egg.state === 'hatched' ? et.icon : '🥚'}</span>
+                        <div style="flex:1;margin:0 10px;">
+                            <div style="color:#fff;font-size:13px;">${et.name}</div>
+                            <div style="color:#aaa;font-size:11px;">${stateText}</div>
+                        </div>
+                        ${egg.state === 'egg' ?
+                            `<button onclick="feedEgg(${i},'milk')" style="font-size:11px;padding:4px 8px;background:rgba(255,255,255,0.1);border:1px solid #aaa;border-radius:5px;color:#fff;cursor:pointer;" ${game.feedItems.milk <= 0 ? 'disabled' : ''}>🥛 喂奶</button>` :
+                            egg.state === 'hatching' ?
+                            `<button onclick="feedEgg(${i},'cookie')" style="font-size:11px;padding:4px 8px;background:rgba(255,255,255,0.1);border:1px solid #aaa;border-radius:5px;color:#fff;cursor:pointer;" ${game.feedItems.cookie <= 0 ? 'disabled' : ''}>🍪 喂饼干</button>` :
+                            `<span style="color:#ffd700;font-size:12px;">🎉 完成</span>`
+                        }
+                    </div>
+                    ${egg.state !== 'hatched' ? `
+                    <div style="height:6px;background:rgba(255,255,255,0.1);border-radius:3px;margin-top:6px;">
+                        <div style="height:6px;background:${et.color};border-radius:3px;width:${Math.min(100, egg.state === 'egg' ? egg.progress * 10 : egg.feedProgress / egg.feedNeed * 100)}%;"></div>
+                    </div>` : ''}
+                </div>`;
+            });
+        }
+        document.getElementById('nestContent').innerHTML = html;
+    }
+
+    function feedEgg(idx, foodType) {
+        let egg = game.eggs[idx];
+        if (!egg) return;
+        if (foodType === 'milk' && egg.state === 'egg' && game.feedItems.milk > 0) {
+            game.feedItems.milk--;
+            egg.progress++;
+            let et = EGG_TYPES[egg.typeIdx];
+            if (egg.progress >= et.hatchTime) {
+                egg.state = 'hatching';
+                egg.feedProgress = 0;
+                egg.feedNeed = et.feedNeed;
+            }
+        } else if (foodType === 'cookie' && egg.state === 'hatching' && game.feedItems.cookie > 0) {
+            game.feedItems.cookie--;
+            egg.feedProgress++;
+            if (egg.feedProgress >= egg.feedNeed) {
+                egg.state = 'hatched';
+                game.hatchedCount++;
+                checkHiddenUnlocks();
+            }
+        }
+        saveSaveData();
+        renderNest();
     }
 
     // ============ 渲染 ============
@@ -1282,6 +1654,36 @@
         ctx.fillStyle = hpPct > 0.5 ? '#4caf50' : hpPct > 0.25 ? '#ff9800' : '#f44336';
         ctx.fillRect(cx - 20, cy - 30, 40 * hpPct, 5);
 
+        // Draw obstacles
+        for (let ob of game.obstacles) {
+            if (ob.hp <= 0) continue;
+            let obType = OBSTACLE_TYPES[ob.type];
+            let ox = ob.x * TILE, oy = ob.y * TILE;
+            // 背景
+            ctx.fillStyle = obType.color + '50';
+            ctx.fillRect(ox + 2, oy + 2, TILE - 4, TILE - 4);
+            ctx.strokeStyle = obType.color;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(ox + 2, oy + 2, TILE - 4, TILE - 4);
+            // 图标
+            ctx.font = '18px serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(obType.icon, ox + TILE / 2, oy + TILE / 2 - 3);
+            // 费用提示
+            ctx.font = '9px Microsoft YaHei';
+            ctx.fillStyle = '#ffd700';
+            ctx.fillText(`💰${obType.cost}`, ox + TILE / 2, oy + TILE - 8);
+            // HP条
+            let hpPctOb = ob.hp / ob.maxHp;
+            if (hpPctOb < 1) {
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillRect(ox + 4, oy + 3, TILE - 8, 3);
+                ctx.fillStyle = '#4caf50';
+                ctx.fillRect(ox + 4, oy + 3, (TILE - 8) * hpPctOb, 3);
+            }
+        }
+
         // Draw towers
         for (let t of game.towers) {
             let type = TOWER_TYPES[t.type];
@@ -1479,6 +1881,9 @@
             game.selectedTower = game.selectedTower === clickedTower ? null : clickedTower;
             game.selectedType = null;
             document.querySelectorAll('.tower-btn').forEach(btn => btn.classList.remove('selected'));
+        } else if (game.grid[gx][gy] === 3) {
+            // 点击障碍物 - 攻击它
+            attackObstacle(gx, gy);
         } else if (game.selectedType && game.grid[gx][gy] === 0) {
             placeTower(gx, gy);
         } else {
@@ -1487,18 +1892,52 @@
         updateUI();
     }
 
+    // 攻击障碍物
+    function attackObstacle(gx, gy) {
+        let ob = game.obstacles.find(o => o.x === gx && o.y === gy && o.hp > 0);
+        if (!ob) return;
+        let obType = OBSTACLE_TYPES[ob.type];
+        let cost = obType.cost;
+        if (game.gold < cost) {
+            addFloatingText('金币不足!', gx * TILE + TILE / 2, gy * TILE, '#ff5252');
+            return;
+        }
+        game.gold -= cost;
+        ob.hp = 0;
+        game.grid[gx][gy] = 0;
+        game.clearedObstacles++;
+        addParticles(gx * TILE + TILE / 2, gy * TILE + TILE / 2, obType.color, 12);
+        addFloatingText(`+50💰 清除${obType.name}`, gx * TILE + TILE / 2, gy * TILE - 10, '#4caf50');
+        game.gold += 50; // 清除奖励
+        updateUI();
+    }
+
     // ============ 游戏循环 ============
     function gameLoop() {
-        if (game.running) {
+        if (game.running && !game.paused) {
             update();
         }
         if (game.currentLevel !== undefined && LEVELS[game.currentLevel]) {
             draw();
+            // 暂停遮罩
+            if (game.paused && game.running) {
+                ctx.fillStyle = 'rgba(0,0,0,0.55)';
+                ctx.fillRect(0, 0, 800, 600);
+                ctx.fillStyle = '#ffd700';
+                ctx.font = 'bold 48px Microsoft YaHei';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('⏸ 游戏暂停', 400, 280);
+                ctx.font = '18px Microsoft YaHei';
+                ctx.fillStyle = '#aaa';
+                ctx.fillText('点击「继续」恢复游戏', 400, 335);
+            }
         }
         requestAnimationFrame(gameLoop);
     }
 
     // ============ 启动 ============
+    loadSaveData();
     showStart();
     resizeCanvas();
     gameLoop();
